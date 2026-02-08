@@ -1,0 +1,8 @@
+promtps/
+venv/
+.env
+__pycache__/
+prompts/
+.env*
+node_modules/
+random-documentation/
