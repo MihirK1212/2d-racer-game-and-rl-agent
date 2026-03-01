@@ -7,37 +7,45 @@
 
 int main()
 {
-    // Bigger window
-    sf::RenderWindow window(sf::VideoMode({1000, 600}), "Arrange The Letters");
+    // Create large window
+    sf::RenderWindow window(
+        sf::VideoMode({1000, 600}),
+        "Arrange The Letters - SFML 3");
 
-    // Load font (make sure arial.ttf is in your project folder)
+    window.setFramerateLimit(60);
+
+    // Load font (place file next to executable or adjust path)
     sf::Font font;
     if (!font.openFromFile("arial.ttf"))
         return -1;
 
     // Letters to display
-    std::vector<std::string> letters =
+    const std::vector<std::string> letters =
     { "I","L","O","V","E","Y","O","U","V","I","S","H","W","A" };
 
     std::vector<sf::Text> textObjects;
+    textObjects.reserve(letters.size());
 
+    // Random number generator
     std::mt19937 rng(static_cast<unsigned>(std::time(nullptr)));
     std::uniform_int_distribution<int> xDist(50, 900);
     std::uniform_int_distribution<int> yDist(50, 500);
 
-    // Create letter objects with random positions
-    for (const auto& l : letters)
+    // Create text objects with random positions
+    for (const auto& letter : letters)
     {
-        sf::Text text(font, l, 80);
+        sf::Text text(font, letter, 80);
         text.setFillColor(sf::Color::Green);
-        text.setPosition(
-            sf::Vector2f(static_cast<float>(xDist(rng)),
-                         static_cast<float>(yDist(rng))));
+        text.setPosition({
+            static_cast<float>(xDist(rng)),
+            static_cast<float>(yDist(rng))
+        });
+
         textObjects.push_back(text);
     }
 
     int selectedIndex = -1;
-    std::string numberBuffer = "";
+    std::string numberBuffer;
 
     while (window.isOpen())
     {
@@ -46,46 +54,69 @@ int main()
             if (event->is<sf::Event::Closed>())
                 window.close();
 
-            if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>())
+            if (const auto* keyPressed =
+                event->getIf<sf::Event::KeyPressed>())
             {
-                // Capture number input
-                if (keyPressed->code >= sf::Keyboard::Num0 &&
-                    keyPressed->code <= sf::Keyboard::Num9)
+                const auto key = keyPressed->code;
+
+                // Collect numeric input (0–9)
+                if (key >= sf::Keyboard::Key::Num0 &&
+                    key <= sf::Keyboard::Key::Num9)
                 {
-                    int digit = keyPressed->code - sf::Keyboard::Num0;
+                    int digit =
+                        static_cast<int>(key) -
+                        static_cast<int>(sf::Keyboard::Key::Num0);
+
                     numberBuffer += std::to_string(digit);
                 }
 
-                // Press F to confirm selection
-                if (keyPressed->code == sf::Keyboard::F && !numberBuffer.empty())
+                // Confirm selection with F
+                if (key == sf::Keyboard::Key::F &&
+                    !numberBuffer.empty())
                 {
                     int index = std::stoi(numberBuffer) - 1;
-                    if (index >= 0 && index < textObjects.size())
+
+                    if (index >= 0 &&
+                        index < static_cast<int>(textObjects.size()))
+                    {
                         selectedIndex = index;
+                    }
 
                     numberBuffer.clear();
                 }
             }
         }
 
-        // Move selected letter with arrow keys
-        if (selectedIndex != -1)
+        // Movement
+        if (selectedIndex >= 0)
         {
-            float moveSpeed = 2.5f;
+            float moveSpeed = 4.0f;
 
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
-                textObjects[selectedIndex].move({-moveSpeed, 0});
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-                textObjects[selectedIndex].move({moveSpeed, 0});
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
-                textObjects[selectedIndex].move({0, -moveSpeed});
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
-                textObjects[selectedIndex].move({0, moveSpeed});
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
+                textObjects[selectedIndex].move({-moveSpeed, 0.f});
+
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
+                textObjects[selectedIndex].move({moveSpeed, 0.f});
+
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))
+                textObjects[selectedIndex].move({0.f, -moveSpeed});
+
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down))
+                textObjects[selectedIndex].move({0.f, moveSpeed});
+        }
+
+        // Highlight selected letter
+        for (size_t i = 0; i < textObjects.size(); ++i)
+        {
+            if (static_cast<int>(i) == selectedIndex)
+                textObjects[i].setFillColor(sf::Color::Yellow);
+            else
+                textObjects[i].setFillColor(sf::Color::Green);
         }
 
         window.clear(sf::Color::Black);
 
-        for (auto& text : textObjects)
+        for (const auto& text : textObjects)
             window.draw(text);
 
         window.display();
@@ -93,25 +124,3 @@ int main()
 
     return 0;
 }
-
-// #include <SFML/Graphics.hpp>
-
-// int main()
-// {
-//     sf::Window  window(sf::VideoMode({200, 200}), "SFML works!");
-//     sf::CircleShape shape(100.f);
-//     shape.setFillColor(sf::Color::Green);
-
-//     while (window.isOpen())
-//     {
-//         while (const std::optional event = window.pollEvent())
-//         {
-//             if (event->is<sf::Event::Closed>())
-//                 window.close();
-//         }
-
-//         window.clear();
-//         window.draw(shape);
-//         window.display();
-//     }
-// }
