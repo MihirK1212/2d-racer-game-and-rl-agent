@@ -21,7 +21,7 @@ int main()
 
     // Letters to display
     const std::vector<std::string> letters =
-    { "I","L","O","V","E","Y","O","U","V","I","S","H","W","A" };
+    { "H", "E", "L", "L", "O", "M", "I", "H", "I", "R" };
 
     std::vector<sf::Text> textObjects;
     textObjects.reserve(letters.size());
