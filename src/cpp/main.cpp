@@ -18,7 +18,7 @@ int main()
     Car* car = new Car(500, 300, 30, 30);
 
     sf::RectangleShape carShape({car->width, car->height});
-    carShape.setPosition(car->x, car->y);
+    carShape.setPosition({car->x, car->y});
     carShape.setFillColor(sf::Color::Red);
 
     while (window.isOpen())
