@@ -28,22 +28,22 @@ Car::Car(
     this->friction = friction_val;
 }
 
-Vector2D Car::getX()
+double Car::getX()
 {
     return x;
 }
 
-Vector2D Car::getY()
+double Car::getY()
 {
     return y;
 }
 
-Vector2D Car::getWidth()
+double Car::getWidth()
 {
     return width;
 }
 
-Vector2D Car::getHeight()
+double Car::getHeight()
 {
     return height;
 }
