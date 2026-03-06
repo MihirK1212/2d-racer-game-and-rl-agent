@@ -20,6 +20,14 @@ struct Vector2D {
     double magnitude() const {
         return std::sqrt(std::pow(x, 2) + std::pow(y, 2));
     }
+
+    Vector2D normalize() const {
+        return Vector2D(x / magnitude(), y / magnitude());
+    }
+
+    Vector2D rotate(double angle) const {
+        return Vector2D(x * std::cos(angle) - y * std::sin(angle), x * std::sin(angle) + y * std::cos(angle));
+    }
 };
 
 #endif
