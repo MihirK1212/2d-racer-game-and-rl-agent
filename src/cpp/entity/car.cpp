@@ -55,9 +55,9 @@ Vector2D Car::getVelocity()
 
 void Car::move(double dt)
 {
-    bool signBefore = speed >= 0;
+    bool signBefore = speed > 0;
     speed += tangentialAcceleration * dt;
-    bool signAfter = speed >= 0; 
+    bool signAfter = speed > 0; 
 
     if(signBefore != signAfter) {
         // if the sign of the speed changes, set the speed to 0
