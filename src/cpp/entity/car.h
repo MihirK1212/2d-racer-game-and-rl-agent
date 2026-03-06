@@ -34,6 +34,10 @@ class Car {
         double friction = 0.1
     );
 
+    Vector2D getX();
+    Vector2D getY();
+    Vector2D getWidth();
+    Vector2D getHeight();
     Vector2D getVelocity(); // get the velocity of the car
 
     void move(double dt); // move the car for the given time step
