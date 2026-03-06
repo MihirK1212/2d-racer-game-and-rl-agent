@@ -44,6 +44,8 @@ int main()
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
             car->rotateClockwise(1);
 
+        car->setNoInputAcceleration();
+
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))
             car->accelerateForward();
 
