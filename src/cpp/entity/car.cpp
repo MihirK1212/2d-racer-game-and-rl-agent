@@ -66,13 +66,19 @@ Vector2D Car::getDirection()
 
 void Car::move(double dt)
 {   
-    bool initiallyZero = (std::abs(speed) < 0.01);
+    bool initiallySpeedZero = (std::abs(speed) < 0.01);
+    bool initiallyAccelerationZero = (std::abs(tangentialAcceleration) < 0.01);
+
+    if(initiallySpeedZero && initiallyAccelerationZero) {
+        // car is stationary and no acceleration
+        return;
+    }
 
     bool signBefore = speed >= 0;
     speed += tangentialAcceleration * dt;
     bool signAfter = speed >= 0; 
 
-    if(!initiallyZero && signBefore != signAfter) {
+    if(!initiallySpeedZero && signBefore != signAfter) {
         // if the sign of the speed changes, set the speed to 0 (simulate the car pausing briefly)
         std::this_thread::sleep_for(std::chrono::milliseconds(300));
         speed = 0;
