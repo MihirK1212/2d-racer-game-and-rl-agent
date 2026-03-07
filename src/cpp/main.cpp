@@ -23,7 +23,10 @@ int main()
 
     Car* car = new Car(0, 0, 1.8, 4.5);
 
-    sf::RectangleShape carShape({car->getWidth(), car->getHeight()});
+    sf::RectangleShape carShape({
+        static_cast<float>(coordTransform.metersToPixels(car->getWidth())),
+        static_cast<float>(coordTransform.metersToPixels(car->getHeight()))
+    });
     carShape.setFillColor(sf::Color::Red);
 
     while (window.isOpen())
@@ -87,9 +90,9 @@ int main()
         const float headLength = 8.f;
         const float headAngle = 0.45f;
 
-        Vector2D screenDir = coordTransform.gameToScreenVector(car->getDirection());
-        float cx = static_cast<float>(screenPos.x + car->getWidth() / 2.0);
-        float cy = static_cast<float>(screenPos.y + car->getHeight() / 2.0);
+        Vector2D screenDir = coordTransform.gameToScreenDirection(car->getDirection());
+        float cx = static_cast<float>(screenPos.x + coordTransform.metersToPixels(car->getWidth()) / 2.0);
+        float cy = static_cast<float>(screenPos.y + coordTransform.metersToPixels(car->getHeight()) / 2.0);
         float tipX = cx + static_cast<float>(screenDir.x) * arrowLength;
         float tipY = cy + static_cast<float>(screenDir.y) * arrowLength;
 

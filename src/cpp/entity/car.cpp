@@ -11,7 +11,7 @@
 
 
 Car::Car(
-    int x_val, int y_val, int width_val, int height_val, 
+    double x_val, double y_val, double width_val, double height_val, 
     double maxSpeedForward_val,
     double maxSpeedBackward_val,
     double driveAcceleration_val,
