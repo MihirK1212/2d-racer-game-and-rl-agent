@@ -8,6 +8,8 @@
 #include "./engine/vector.h"
 #include "./engine/coordinates.h"
 
+#define FRAME_RATE 60
+
 int main()
 {
     // Create large window
@@ -15,11 +17,11 @@ int main()
         sf::VideoMode({1000, 600}),
         "Car Driving Game");
 
-    window.setFramerateLimit(60);
+    window.setFramerateLimit(FRAME_RATE);
 
     CoordinateTransform coordTransform(1000, 600);
 
-    Car* car = new Car(0, 0, 30, 30);
+    Car* car = new Car(0, 0, 1.8, 4.5);
 
     sf::RectangleShape carShape({car->getWidth(), car->getHeight()});
     carShape.setFillColor(sf::Color::Red);
@@ -68,8 +70,8 @@ int main()
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down))
             car->accelerateBackward();
 
-        // 3. Update Game State
-        car->move(1.0 / 60.0);
+        // 3. Update Game State by 1/FRAME_RATE of a second because the game is running at FRAME_RATE fps
+        car->move(1.0 / FRAME_RATE);
         
         // 4. Render — transform game state to screen coordinates
         Vector2D screenPos = coordTransform.gameToScreenPoint(
