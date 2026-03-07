@@ -17,7 +17,7 @@ int main()
 
     window.setFramerateLimit(60);
 
-    CoordinateTransform coordTransform(0);
+    CoordinateTransform coordTransform(1000, 600);
 
     Car* car = new Car(0, 0, 30, 30);
 

@@ -4,38 +4,36 @@
 #include "vector.h"
 
 /*
- * Transforms between two 2D coordinate systems that share the same x-axis
- * but have opposite y-axes.
+ * Transforms between two 2D coordinate systems:
  *
- * Game  (internal state): x-right, y-UP    (standard math)
- * Screen (SFML render):   x-right, y-DOWN
+ * Game  (internal state): origin at CENTER of screen, x-right, y-UP
+ * Screen (SFML render):   origin at TOP-LEFT,          x-right, y-DOWN
  *
- * The basis vectors of the screen frame expressed in game frame are:
- *   e_screen_x = ( 1,  0 )   (same)
- *   e_screen_y = ( 0, -1 )   (flipped)
+ * Basis change (y-flip):
+ *   e_screen_x = ( 1,  0 )
+ *   e_screen_y = ( 0, -1 )
  *
- * For points, an additional translation accounts for the vertical offset
- * so that game-origin bottom-left maps to screen-origin top-left:
- *   screen_point = (game_x,  screenHeight - game_y)
+ * Point transform (basis change + origin translation):
+ *   screen_x =  game_x + screenWidth  / 2
+ *   screen_y = -game_y + screenHeight / 2
  *
- * For free vectors (directions, velocities, etc.) only the basis change
- * applies — no translation:
- *   screen_vec   = (game_vx, -game_vy)
- *
- * Both transforms are self-inverse, but named pairs are provided for clarity.
+ * Free vector transform (basis change only, no translation):
+ *   screen_vx =  game_vx
+ *   screen_vy = -game_vy
  */
 struct CoordinateTransform {
+    double screenWidth;
     double screenHeight;
 
-    explicit CoordinateTransform(double screenHeight)
-        : screenHeight(screenHeight) {}
+    CoordinateTransform(double screenWidth, double screenHeight)
+        : screenWidth(screenWidth), screenHeight(screenHeight) {}
 
     Vector2D gameToScreenPoint(const Vector2D& p) const {
-        return {p.x, screenHeight - p.y};
+        return {p.x + screenWidth / 2.0, -p.y + screenHeight / 2.0};
     }
 
     Vector2D screenToGamePoint(const Vector2D& p) const {
-        return {p.x, screenHeight - p.y};
+        return {p.x - screenWidth / 2.0, -(p.y - screenHeight / 2.0)};
     }
 
     Vector2D gameToScreenVector(const Vector2D& v) const {
