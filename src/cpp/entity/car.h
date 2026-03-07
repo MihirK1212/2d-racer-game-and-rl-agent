@@ -39,6 +39,7 @@ class Car {
     double getWidth();
     double getHeight();
     Vector2D getVelocity(); // get the velocity of the car
+    Vector2D getDirection(); // get the forward direction of the car
 
     void move(double dt); // move the car for the given time step
 

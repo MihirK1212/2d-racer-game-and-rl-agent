@@ -5,6 +5,7 @@
 #include <optional>
 #include <string>
 #include "./entity/car.h"
+#include "./engine/vector.h"
 
 int main()
 {
@@ -72,6 +73,31 @@ int main()
         window.clear(sf::Color::Black);
 
         window.draw(carShape);
+
+        // Direction arrow
+        const float arrowLength = 30.f;
+        const float headLength = 8.f;
+        const float headAngle = 0.45f;
+
+        Vector2D dir = car->getDirection();
+        float cx = static_cast<float>(car->getX() + car->getWidth() / 2.0);
+        float cy = static_cast<float>(car->getY() + car->getHeight() / 2.0);
+        float tipX = cx + static_cast<float>(dir.x) * arrowLength;
+        float tipY = cy + static_cast<float>(dir.y) * arrowLength;
+
+        Vector2D back = (dir * -1.0).normalize();
+        Vector2D leftWing = back.rotate(headAngle) * headLength;
+        Vector2D rightWing = back.rotate(-headAngle) * headLength;
+
+        sf::VertexArray arrow(sf::PrimitiveType::Lines, 6);
+        arrow[0] = sf::Vertex{{cx, cy}, sf::Color::Yellow};
+        arrow[1] = sf::Vertex{{tipX, tipY}, sf::Color::Yellow};
+        arrow[2] = sf::Vertex{{tipX, tipY}, sf::Color::Yellow};
+        arrow[3] = sf::Vertex{{tipX + static_cast<float>(leftWing.x), tipY + static_cast<float>(leftWing.y)}, sf::Color::Yellow};
+        arrow[4] = sf::Vertex{{tipX, tipY}, sf::Color::Yellow};
+        arrow[5] = sf::Vertex{{tipX + static_cast<float>(rightWing.x), tipY + static_cast<float>(rightWing.y)}, sf::Color::Yellow};
+
+        window.draw(arrow);
 
         window.display();
     }

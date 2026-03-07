@@ -54,6 +54,11 @@ Vector2D Car::getVelocity()
     return direction * speed;
 }
 
+Vector2D Car::getDirection()
+{
+    return direction;
+}
+
 void Car::move(double dt)
 {   
     bool initiallyZero = (std::abs(speed) < 0.01);
