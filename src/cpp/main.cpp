@@ -6,6 +6,7 @@
 #include <string>
 #include "./entity/car.h"
 #include "./engine/vector.h"
+#include "./engine/coordinates.h"
 
 int main()
 {
@@ -15,6 +16,8 @@ int main()
         "Car Driving Game");
 
     window.setFramerateLimit(60);
+
+    CoordinateTransform coordTransform(600);
 
     Car* car = new Car(500, 300, 30, 30);
 
@@ -52,10 +55,10 @@ int main()
 
         // 2. Handle Continuous Input
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
-            car->rotateClockwise(3); // TODO: fix this, the screen axes is inverted over the x-axis, handle that before rendering. for now, just rotate clockwise.
+            car->rotateAntiClockwise(3);
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
-            car->rotateAntiClockwise(3); // TODO: fix this, the screen axes is inverted over the x-axis, handle that before rendering. for now, just rotate anti-clockwise.
+            car->rotateClockwise(3);
 
         car->setNoInputAcceleration();
 
@@ -67,25 +70,28 @@ int main()
 
         // 3. Update Game State
         car->move(1.0 / 60.0);
-        carShape.setPosition({car->getX(), car->getY()});
-
-        // 4. Render
+        
+        // 4. Render — transform game state to screen coordinates
+        Vector2D screenPos = coordTransform.gameToScreenPoint(
+            Vector2D(car->getX(), car->getY()));
+        carShape.setPosition({static_cast<float>(screenPos.x),
+                              static_cast<float>(screenPos.y)});
         window.clear(sf::Color::Black);
 
         window.draw(carShape);
 
-        // Direction arrow
+        // Direction arrow (computed in screen space)
         const float arrowLength = 30.f;
         const float headLength = 8.f;
         const float headAngle = 0.45f;
 
-        Vector2D dir = car->getDirection();
-        float cx = static_cast<float>(car->getX() + car->getWidth() / 2.0);
-        float cy = static_cast<float>(car->getY() + car->getHeight() / 2.0);
-        float tipX = cx + static_cast<float>(dir.x) * arrowLength;
-        float tipY = cy + static_cast<float>(dir.y) * arrowLength;
+        Vector2D screenDir = coordTransform.gameToScreenVector(car->getDirection());
+        float cx = static_cast<float>(screenPos.x + car->getWidth() / 2.0);
+        float cy = static_cast<float>(screenPos.y + car->getHeight() / 2.0);
+        float tipX = cx + static_cast<float>(screenDir.x) * arrowLength;
+        float tipY = cy + static_cast<float>(screenDir.y) * arrowLength;
 
-        Vector2D back = (dir * -1.0).normalize();
+        Vector2D back = (screenDir * -1.0).normalize();
         Vector2D leftWing = back.rotate(headAngle) * headLength;
         Vector2D rightWing = back.rotate(-headAngle) * headLength;
 
