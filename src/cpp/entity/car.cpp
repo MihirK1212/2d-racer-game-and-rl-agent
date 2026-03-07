@@ -80,7 +80,7 @@ void Car::move(double dt)
 
     if(!initiallySpeedZero && signBefore != signAfter) {
         // if the sign of the speed changes, set the speed to 0 (simulate the car pausing briefly)
-        std::this_thread::sleep_for(std::chrono::milliseconds(300));
+        // std::this_thread::sleep_for(std::chrono::milliseconds(300));
         speed = 0;
     }
 
