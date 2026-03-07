@@ -36,10 +36,16 @@ int main()
                 window.close();
             }
 
-            // Print car state when 9 is pressed
-            if ( key == sf::Keyboard::Key::Num9)
+            if (const auto* keyPressed =
+                event->getIf<sf::Event::KeyPressed>())
             {
-                car->printCarState();
+                const auto key = keyPressed->code;
+
+                // Print car state when 9 is pressed
+                if ( key == sf::Keyboard::Key::Num9)
+                {
+                    car->printCarState();
+                }
             }
         }
 
