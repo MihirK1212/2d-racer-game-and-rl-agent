@@ -35,6 +35,12 @@ int main()
             if (event->is<sf::Event::Closed>()) {
                 window.close();
             }
+
+            // Print car state when 9 is pressed
+            if ( key == sf::Keyboard::Key::Num9)
+            {
+                car->printCarState();
+            }
         }
 
         // 2. Handle Continuous Input

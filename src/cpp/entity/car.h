@@ -48,6 +48,9 @@ class Car {
 
     void rotateAntiClockwise(double angle); // rotate the car anti-clockwise by the given angle
     void rotateClockwise(double angle); // rotate the car clockwise by the given angle
+
+
+    void printCarState();
 };
 
 #endif

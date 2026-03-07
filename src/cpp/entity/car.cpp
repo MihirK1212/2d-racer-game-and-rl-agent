@@ -121,3 +121,14 @@ void Car::rotateClockwise(double angle) {
         direction = direction.rotate(-angle).normalize();
     }
 }
+
+void Car::printCarState()
+{
+    std::cout << "--------------------------------" << std::endl;
+    std::cout << "Car state: " << std::endl;
+    std::cout << "Position: (" << x << ", " << y << ")" << std::endl;
+    std::cout << "Speed: " << speed << std::endl;
+    std::cout << "Direction: (" << direction.x << ", " << direction.y << ")" << std::endl;
+    std::cout << "Tangential Acceleration: " << tangentialAcceleration << std::endl;
+    std::cout << "--------------------------------" << std::endl;
+}
