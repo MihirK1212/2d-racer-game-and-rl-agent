@@ -4,6 +4,8 @@
 #include "../engine/vector.h"
 
 class Car {
+    // units are in meters and seconds
+
     double x; // position of the center of the car on the x-axis
     double y; // position of the center of the car on the y-axis
     int width; // width of the car
@@ -28,8 +30,8 @@ class Car {
 
     Car(
         int x, int y, int width, int height, 
-        double maxSpeedForward = 100, double maxSpeedBackward = 50, 
-        double driveAcceleration = 10, double brakeAcceleration = 5,
+        double maxSpeedForward = 28, double maxSpeedBackward = 12, 
+        double driveAcceleration = 2.5, double brakeAcceleration = 7.5,
         double maxTangentialAcceleration = 10,
         double friction = 0.1
     );

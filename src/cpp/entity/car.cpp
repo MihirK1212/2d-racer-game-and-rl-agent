@@ -1,9 +1,14 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <thread>
+#include <chrono>
 
 #include "car.h"
 #include "../engine/vector.h"
+
+#define M_PI 3.14159265358979323846
+
 
 Car::Car(
     int x_val, int y_val, int width_val, int height_val, 
@@ -68,7 +73,8 @@ void Car::move(double dt)
     bool signAfter = speed >= 0; 
 
     if(!initiallyZero && signBefore != signAfter) {
-        // if the sign of the speed changes, set the speed to 0
+        // if the sign of the speed changes, set the speed to 0 (simulate the car pausing briefly)
+        std::this_thread::sleep_for(std::chrono::milliseconds(300));
         speed = 0;
     }
 

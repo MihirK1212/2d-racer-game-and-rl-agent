@@ -1,7 +1,7 @@
 #ifndef COORDINATES_H
 #define COORDINATES_H
 
-#include "vector.h"
+#include "../engine/vector.h"
 
 /*
  * Transforms between two 2D coordinate systems:
