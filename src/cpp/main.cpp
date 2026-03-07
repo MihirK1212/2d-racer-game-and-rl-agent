@@ -21,7 +21,7 @@ int main()
 
     CoordinateTransform coordTransform(1000, 600);
 
-    Car* car = new Car(0, 0, 1.8, 4.5);
+    Car* car = new Car(0, 0, 0.9, 2.2);
 
     sf::RectangleShape carShape({
         static_cast<float>(coordTransform.metersToPixels(car->getWidth())),
