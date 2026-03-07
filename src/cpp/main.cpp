@@ -19,7 +19,7 @@ int main()
 
     CoordinateTransform coordTransform(600);
 
-    Car* car = new Car(500, 300, 30, 30);
+    Car* car = new Car(0, 0, 30, 30);
 
     sf::RectangleShape carShape({car->getWidth(), car->getHeight()});
     carShape.setFillColor(sf::Color::Red);
