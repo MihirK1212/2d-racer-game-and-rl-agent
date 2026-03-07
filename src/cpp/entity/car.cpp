@@ -76,9 +76,16 @@ void Car::move(double dt)
 
 void Car::setNoInputAcceleration()
 {
-    // sign(speed): -1 for negative, 0 for zero, +1 for positive
-    const double speedSign = (speed > 0.0) - (speed < 0.0);
-    tangentialAcceleration = -friction * speedSign;
+    if((std::abs(speed) < 0.01)) {
+        // if car is already stationary, set acceleration to 0 
+        tangentialAcceleration = 0;
+    }
+    else {
+        // if car is moving, apply friction
+        // sign(speed): -1 for negative, 0 for zero, +1 for positive
+        const double speedSign = (speed > 0.0) - (speed < 0.0);
+        tangentialAcceleration = -friction * speedSign;
+    }
 }
 
 void Car::accelerateForward()
