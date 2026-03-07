@@ -22,7 +22,7 @@
  *   Direction    (unit → unit):     applies y-flip only
  */
 struct CoordinateTransform {
-    static constexpr double PIXELS_PER_METER = 50.0;
+    static constexpr double PIXELS_PER_METER = 30.0;
 
     double screenWidth;
     double screenHeight;
