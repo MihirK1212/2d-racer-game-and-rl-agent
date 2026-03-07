@@ -30,7 +30,7 @@ class Car {
 
     Car(
         double x, double y, double width, double height, 
-        double maxSpeedForward = 28, double maxSpeedBackward = 12, 
+        double maxSpeedForward = 20, double maxSpeedBackward = 10, 
         double driveAcceleration = 2.5, double brakeAcceleration = 7.5,
         double maxTangentialAcceleration = 10,
         double friction = 0.1
