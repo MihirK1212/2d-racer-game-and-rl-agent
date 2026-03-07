@@ -24,7 +24,7 @@ Car::Car(
     this->brakeAcceleration = brakeAcceleration_val;
     this->maxTangentialAcceleration = maxTangentialAcceleration_val;
     this->speed = 0;
-    this->direction = Vector2D(-1, 0);
+    this->direction = Vector2D(0, 1);
     this->tangentialAcceleration = 0;
     this->friction = friction_val;
 }
