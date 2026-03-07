@@ -2,11 +2,16 @@
 #include <vector>
 #include <random>
 #include <ctime>
+#include <cmath>
 #include <optional>
 #include <string>
 #include "./entity/car.h"
 #include "./engine/vector.h"
 #include "./engine/coordinates.h"
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 #define FRAME_RATE 60
 
@@ -21,13 +26,17 @@ int main()
 
     CoordinateTransform coordTransform(1000, 600);
 
-    Car* car = new Car(0, 0, 0.9, 2.2);
+    Car* car = new Car(0, 0, 0.7, 1.5);
 
     sf::RectangleShape carShape({
         static_cast<float>(coordTransform.metersToPixels(car->getWidth())),
         static_cast<float>(coordTransform.metersToPixels(car->getHeight()))
     });
     carShape.setFillColor(sf::Color::Red);
+    carShape.setOrigin({
+        static_cast<float>(coordTransform.metersToPixels(car->getWidth()) / 2.0),
+        static_cast<float>(coordTransform.metersToPixels(car->getHeight()) / 2.0)
+    });
 
     while (window.isOpen())
     {   
@@ -81,6 +90,11 @@ int main()
             Vector2D(car->getX(), car->getY()));
         carShape.setPosition({static_cast<float>(screenPos.x),
                               static_cast<float>(screenPos.y)});
+
+        Vector2D screenDir = coordTransform.gameToScreenDirection(car->getDirection());
+        float angleDeg = static_cast<float>(std::atan2(screenDir.y, screenDir.x) * 180.0 / M_PI - 90.0);
+        carShape.setRotation(sf::degrees(angleDeg));
+
         window.clear(sf::Color::Black);
 
         window.draw(carShape);
@@ -90,9 +104,8 @@ int main()
         const float headLength = 8.f;
         const float headAngle = 0.45f;
 
-        Vector2D screenDir = coordTransform.gameToScreenDirection(car->getDirection());
-        float cx = static_cast<float>(screenPos.x + coordTransform.metersToPixels(car->getWidth()) / 2.0);
-        float cy = static_cast<float>(screenPos.y + coordTransform.metersToPixels(car->getHeight()) / 2.0);
+        float cx = static_cast<float>(screenPos.x);
+        float cy = static_cast<float>(screenPos.y);
         float tipX = cx + static_cast<float>(screenDir.x) * arrowLength;
         float tipY = cy + static_cast<float>(screenDir.y) * arrowLength;
 
