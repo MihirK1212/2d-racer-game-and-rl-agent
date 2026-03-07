@@ -8,8 +8,8 @@ class Car {
 
     double x; // position of the center of the car on the x-axis
     double y; // position of the center of the car on the y-axis
-    int width; // width of the car
-    int height; // height of the car
+    double width; // width of the car (meters)
+    double height; // height of the car (meters)
 
     double speed; // speed of the car. +ve means moving in forward direction, -ve means moving in backward direction
     double tangentialAcceleration; // tangential acceleration of the car
@@ -29,8 +29,8 @@ class Car {
     public:
 
     Car(
-        int x, int y, int width, int height, 
-        double maxSpeedForward = 28, double maxSpeedBackward = 12, 
+        double x, double y, double width, double height, 
+        double maxSpeedForward = 20, double maxSpeedBackward = 10, 
         double driveAcceleration = 2.5, double brakeAcceleration = 7.5,
         double maxTangentialAcceleration = 10,
         double friction = 0.1

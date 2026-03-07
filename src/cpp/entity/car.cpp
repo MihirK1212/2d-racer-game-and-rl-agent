@@ -11,7 +11,7 @@
 
 
 Car::Car(
-    int x_val, int y_val, int width_val, int height_val, 
+    double x_val, double y_val, double width_val, double height_val, 
     double maxSpeedForward_val,
     double maxSpeedBackward_val,
     double driveAcceleration_val,
@@ -70,7 +70,7 @@ void Car::move(double dt)
     bool initiallyAccelerationZero = (std::abs(tangentialAcceleration) < 0.01);
 
     if(initiallySpeedZero && initiallyAccelerationZero) {
-        // car is stationary and no acceleration
+        // car is stationary and no acceleration, no need to move the car
         return;
     }
 
@@ -80,7 +80,6 @@ void Car::move(double dt)
 
     if(!initiallySpeedZero && signBefore != signAfter) {
         // if the sign of the speed changes, set the speed to 0 (simulate the car pausing briefly)
-        std::this_thread::sleep_for(std::chrono::milliseconds(300));
         speed = 0;
     }
 
