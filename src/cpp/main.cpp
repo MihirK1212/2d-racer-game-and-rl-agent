@@ -52,10 +52,10 @@ int main()
 
         // 2. Handle Continuous Input
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
-            car->rotateClockwise(3);
+            car->rotateClockwise(3); // TODO: fix this, the screen axes is inverted over the x-axis, handle that before rendering. for now, just rotate clockwise.
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
-            car->rotateAntiClockwise(3);
+            car->rotateAntiClockwise(3); // TODO: fix this, the screen axes is inverted over the x-axis, handle that before rendering. for now, just rotate anti-clockwise.
 
         car->setNoInputAcceleration();
 
