@@ -47,8 +47,8 @@ class Car {
     void accelerateForward(); // accelerate car in forward direction
     void accelerateBackward(); // accelerate car in backward direction
 
-    void rotateAntiClockwise(double angle); // rotate the car anti-clockwise by the given angle
-    void rotateClockwise(double angle); // rotate the car clockwise by the given angle
+    void rotateAntiClockwise(double angleDegrees); // rotate the car anti-clockwise by the given angle (in degrees)
+    void rotateClockwise(double angleDegrees); // rotate the car clockwise by the given angle (in degrees)
 
 
     void printCarState();

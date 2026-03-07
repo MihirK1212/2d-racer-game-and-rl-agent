@@ -123,15 +123,17 @@ void Car::accelerateBackward()
 }
 
 
-void Car::rotateAntiClockwise(double angle) {
+void Car::rotateAntiClockwise(double angleDegrees) {
     if(std::abs(speed) > 0.01) {
-        direction = direction.rotate(angle).normalize();
+        double angleRadians = angleDegrees * M_PI / 180.0;
+        direction = direction.rotate(angleRadians).normalize();
     }
 }
 
-void Car::rotateClockwise(double angle) {
+void Car::rotateClockwise(double angleDegrees) {
     if(std::abs(speed) > 0.01) {
-        direction = direction.rotate(-angle).normalize();
+        double angleRadians = angleDegrees * M_PI / 180.0;
+        direction = direction.rotate(-angleRadians).normalize();
     }
 }
 

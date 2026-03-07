@@ -52,10 +52,10 @@ int main()
 
         // 2. Handle Continuous Input
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
-            car->rotateAntiClockwise(1);
+            car->rotateAntiClockwise(3);
 
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
-            car->rotateClockwise(1);
+            car->rotateClockwise(3);
 
         car->setNoInputAcceleration();
 
