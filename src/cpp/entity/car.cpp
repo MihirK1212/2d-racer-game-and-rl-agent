@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 
 #include "car.h"
 #include "../engine/vector.h"
@@ -124,11 +125,11 @@ void Car::rotateClockwise(double angle) {
 
 void Car::printCarState()
 {
-    std::cout << "--------------------------------" << std::endl;
-    std::cout << "Car state: " << std::endl;
-    std::cout << "Position: (" << x << ", " << y << ")" << std::endl;
-    std::cout << "Speed: " << speed << std::endl;
-    std::cout << "Direction: (" << direction.x << ", " << direction.y << ")" << std::endl;
-    std::cout << "Tangential Acceleration: " << tangentialAcceleration << std::endl;
-    std::cout << "--------------------------------" << std::endl;
+    std::cout << "--------------------------------" << "\n";
+    std::cout << "Car state: " << "\n";
+    std::cout << "Position: (" << x << ", " << y << ")" << "\n";
+    std::cout << "Speed: " << speed << "\n";
+    std::cout << "Direction: (" << direction.x << ", " << direction.y << ")" << "\n";
+    std::cout << "Tangential Acceleration: " << tangentialAcceleration << "\n";
+    std::cout << "--------------------------------" << "\n";
 }
