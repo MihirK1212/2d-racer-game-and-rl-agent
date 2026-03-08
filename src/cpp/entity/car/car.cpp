@@ -5,7 +5,8 @@
 #include <chrono>
 
 #include "car.h"
-#include "../engine/vector.h"
+#include "../../engine/vector.h"
+#include "../../engine/rectangle_obb.h"
 
 #define M_PI 3.14159265358979323846
 
@@ -103,6 +104,24 @@ Vector2D Car::getVelocity() const
 Vector2D Car::getDirection() const
 {
     return direction;
+}
+
+RectangleOBB Car::getOBB() const 
+{
+    // assumption: direction vector is always already normalized
+
+    Vector2D deltaStepForward = direction * (height / 2.0);
+    Vector2D deltaStepRight = Vector2D(direction.y, -direction.x) * (width / 2.0);
+
+    RectangleOBB obb;
+    obb.corners[0] = position + deltaStepForward + deltaStepRight;   // front-right
+    obb.corners[1] = position + deltaStepForward + deltaStepRight * -1; // front-left
+    obb.corners[2] = position + deltaStepForward * -1 + deltaStepRight * -1; // back-left
+    obb.corners[3] = position + deltaStepForward * -1 + deltaStepRight;  // back-right
+
+    obb.axes[0] = direction;                              // along length
+    obb.axes[1] = Vector2D(direction.y, -direction.x);    // along width
+    return obb;
 }
 
 void Car::setPosition(Vector2D pos)

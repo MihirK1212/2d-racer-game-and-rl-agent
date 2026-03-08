@@ -1,7 +1,8 @@
 #ifndef CAR_H
 #define CAR_H
 
-#include "../engine/vector.h"
+#include "../../engine/vector.h"
+#include "../../engine/rectangle_obb.h"
 
 class Car {
     // units are in meters and seconds
@@ -53,6 +54,7 @@ class Car {
     double getSteeringSpeedFactor() const;
     Vector2D getVelocity() const; // velocity vector of the car
     Vector2D getDirection() const; // forward direction of the car
+    RectangleOBB getOBB() const; // get the oriented bounding box of the car
 
     // Setters (only for properties that can change after construction)
     void setPosition(Vector2D pos);

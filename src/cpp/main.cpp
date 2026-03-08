@@ -5,10 +5,13 @@
 #include <cmath>
 #include <optional>
 #include <string>
+#include <iostream>
 
-#include "./entity/car.h"
+#include "./entity/car/car.h"
 #include "./engine/vector.h"
 #include "./engine/coordinates.h"
+#include "./engine/collision/collision.h"
+#include "./entity/curve/circular_curve.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -108,10 +111,74 @@ void drawDirectionArrow(sf::RenderWindow &window,
     window.draw(arrow);
 }
 
+void drawCurve(sf::RenderWindow &window,
+    CircularCurve* curve,
+    CoordinateTransform &coordTransform)
+{
+    std::vector<Curve2DPoint> points = curve->getCachedPoints();
+    size_t numPoints = points.size();
+
+    if (numPoints < 2)
+    return;
+
+    sf::VertexArray vertices(sf::PrimitiveType::LineStrip, numPoints);
+
+    for (size_t i = 0; i < numPoints; ++i)
+    {
+        Vector2D screenPos = coordTransform.gameToScreenPoint(points[i].position);
+        vertices[i].position =
+        {
+            static_cast<float>(screenPos.x),
+            static_cast<float>(screenPos.y)
+        };
+
+        vertices[i].color = sf::Color::White; // optional
+    }
+
+    window.draw(vertices);
+}
+
+void handleCollisions(std::vector<Car*> cars, CircularCurve* innerBorder, CircularCurve* outerBorder)
+{   
+    int numCars = cars.size();
+    
+    for (int i = 0; i < numCars; i++)
+    {
+        Car* car = cars[i];
+        CollisionResult resultInner = detectCarVsCurve(car, innerBorder);
+        if (resultInner.collided)
+        {
+            resolveCarVsCurve(car, innerBorder, resultInner);
+        }
+        
+        CollisionResult resultOuter = detectCarVsCurve(car, outerBorder);
+        if (resultOuter.collided)
+        {
+            resolveCarVsCurve(car, outerBorder, resultOuter);
+        }
+    }
+
+    for(int i = 0; i < numCars; i++)
+    {
+        Car* car1 = cars[i];
+        for(int j = i + 1; j < numCars; j++)
+        {
+            Car* car2 = cars[j];
+            CollisionResult resultCarVsCar = detectCarVsCar(car1, car2);
+            if (resultCarVsCar.collided)
+            {
+                resolveCarVsCar(car1, car2, resultCarVsCar);
+            }
+        }
+    }
+}
+
 void render(sf::RenderWindow &window,
             Car *car,
             CoordinateTransform &coordTransform,
-            sf::RectangleShape &carShape)
+            sf::RectangleShape &carShape,
+            CircularCurve* innerBorder,
+            CircularCurve* outerBorder)
 {
     Vector2D screenPos = coordTransform.gameToScreenPoint(car->getPosition());
     carShape.setPosition({static_cast<float>(screenPos.x),
@@ -130,8 +197,13 @@ void render(sf::RenderWindow &window,
 
     drawDirectionArrow(window, screenPos, screenDir);
 
+    drawCurve(window, innerBorder, coordTransform);
+    drawCurve(window, outerBorder, coordTransform);
+
     window.display();
 }
+
+
 
 int main()
 {
@@ -139,7 +211,12 @@ int main()
 
     CoordinateTransform coordTransform(1000, 600);
 
-    Car *car = new Car(0, 0, 0.7, 1.5);
+    Car *car = new Car(23.5, 0, 0.7, 1.5);
+
+    CircularCurve* innerBorder = new CircularCurve(20, 0, 0);
+    CircularCurve* outerBorder = new CircularCurve(27, 0, 0);
+    innerBorder->generate(0, 360, 100);
+    outerBorder->generate(0, 360, 100);
 
     sf::RectangleShape carShape = createCarShape(car, coordTransform);
 
@@ -151,10 +228,14 @@ int main()
 
         updateGame(car);
 
-        render(window, car, coordTransform, carShape);
+        handleCollisions(std::vector<Car*> {car}, innerBorder, outerBorder);
+
+        render(window, car, coordTransform, carShape, innerBorder, outerBorder);
     }
 
     delete car;
+    delete innerBorder;
+    delete outerBorder;
 
     return 0;
 }
