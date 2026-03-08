@@ -2,22 +2,24 @@
 #include <cmath>
 
 #include "collision.h"
+#include "../../entity/car/car.h"
+#include "../../entity/curve/curve.h"
 
 
-CollisionResult detectCarVsCurve(const RectangleOBB& car /* curve representation */) {
+CollisionResult detectCarVsCurve(Car* car, ParametricCurve2D* curve) {
     CollisionResult cr(true, Vector2D(0, 0), 0.0, Vector2D(0, 0));
     return cr;
 }
 
-CollisionResult detectCarVsCar(const RectangleOBB& carA, const RectangleOBB& carB) {
+CollisionResult detectCarVsCar(Car* car1, Car* car2) {
     CollisionResult cr(true, Vector2D(0, 0), 0.0, Vector2D(0, 0));
     return cr;
 }
 
-void resolveCarVsWall(Car& car, const CollisionResult& result) {
+void resolveCarVsCurve(Car* car, ParametricCurve2D* curve, CollisionResult& result) {
     return;
 }
 
-void resolveCarVsCar(Car& carA, Car& carB, const CollisionResult& result) {
+void resolveCarVsCar(Car* car1, Car* car2, CollisionResult& result) {
     return;
 }

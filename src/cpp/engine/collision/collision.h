@@ -14,11 +14,11 @@ struct CollisionResult {
     CollisionResult(bool collided_val, Vector2D normal_val, double penetration_val, Vector2D contactPoint_val) : collided(collided_val), normal(normal_val), penetration(penetration_val), contactPoint(contactPoint_val) {}
 };
 
-CollisionResult detectCarVsCurve(const RectangleOBB& car /* curve representation */);
+CollisionResult detectCarVsCurve(Car* car, ParametricCurve2D* curve);
 
-CollisionResult detectCarVsCar(const RectangleOBB& carA, const RectangleOBB& carB);
+CollisionResult detectCarVsCar(Car* car1, Car* car2);
 
-void resolveCarVsWall(Car& car, const CollisionResult& result);
-void resolveCarVsCar(Car& carA, Car& carB, const CollisionResult& result);
+void resolveCarVsCurve(Car* car, ParametricCurve2D* curve, CollisionResult& result);
+void resolveCarVsCar(Car* car1, Car* car2, CollisionResult& result);
 
 #endif
