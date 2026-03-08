@@ -141,9 +141,11 @@ void drawCurve(sf::RenderWindow &window,
 void handleCollisions(std::vector<Car*> cars, CircularCurve* innerBorder, CircularCurve* outerBorder)
 {
     std::cout << "Handling collisions" << std::endl;
-    std::cout << "Number of cars: " << numCars << std::endl;
-
+    
     int numCars = cars.size();
+
+    std::cout << "Number of cars: " << numCars << std::endl;
+    
     for (int i = 0; i < numCars; i++)
     {
         Car* car = cars[i];
