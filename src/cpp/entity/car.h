@@ -23,6 +23,8 @@ class Car {
 
     double friction;
 
+    double steeringSpeedFactor; // k in the model: effectiveTurnRate = angle / (1 + k * |speed|)
+
     Vector2D direction{}; // forward direction of the car
 
     public:
@@ -32,7 +34,8 @@ class Car {
         double maxSpeedForward = 20, double maxSpeedBackward = 10, 
         double driveAcceleration = 2.5, double brakeAcceleration = 7.5,
         double maxTangentialAcceleration = 10,
-        double friction = 0.5
+        double friction = 0.5,
+        double steeringSpeedFactor = 0.1
     );
 
     // Getters
@@ -47,6 +50,7 @@ class Car {
     double getBrakeAcceleration() const;
     double getMaxTangentialAcceleration() const;
     double getFriction() const;
+    double getSteeringSpeedFactor() const;
     Vector2D getVelocity() const; // velocity vector of the car
     Vector2D getDirection() const; // forward direction of the car
 
