@@ -111,21 +111,26 @@ void drawDirectionArrow(sf::RenderWindow &window,
 }
 
 void drawCurve(sf::RenderWindow &window,
-               CircularCurve &curve,
-               CoordinateTransform &coordTransform)
+    CircularCurve &curve,
+    CoordinateTransform &coordTransform)
 {
     std::vector<Curve2DPoint> points = curve.getCachedPoints();
-    int numPoints = points.size(); 
-    for(size_t i = 0; i < numPoints - 1; i++)
-    {
-        sf::Vertex line[] =
-        {
-            sf::Vertex(coordTransform.gameToScreenPoint(points[i].position)),
-            sf::Vertex(coordTransform.gameToScreenPoint(points[i+1].position))
-        };
+    size_t numPoints = points.size();
 
-        window.draw(line, 2, sf::Lines);
+    if (numPoints < 2)
+    return;
+
+    sf::VertexArray vertices(sf::LineStrip, numPoints);
+
+    for (size_t i = 0; i < numPoints; ++i)
+    {
+        vertices[i].position =
+        coordTransform.gameToScreenPoint(points[i].position);
+
+        vertices[i].color = sf::Color::White; // optional
     }
+
+    window.draw(vertices);
 }
 
 void render(sf::RenderWindow &window,
