@@ -139,12 +139,8 @@ void drawCurve(sf::RenderWindow &window,
 }
 
 void handleCollisions(std::vector<Car*> cars, CircularCurve* innerBorder, CircularCurve* outerBorder)
-{
-    std::cout << "Handling collisions" << std::endl;
-    
+{   
     int numCars = cars.size();
-
-    std::cout << "Number of cars: " << numCars << std::endl;
     
     for (int i = 0; i < numCars; i++)
     {
@@ -215,7 +211,7 @@ int main()
 
     CoordinateTransform coordTransform(1000, 600);
 
-    Car *car = new Car(0, 0, 0.7, 1.5);
+    Car *car = new Car(23.5, 0, 0.7, 1.5);
 
     CircularCurve* innerBorder = new CircularCurve(20, 0, 0);
     CircularCurve* outerBorder = new CircularCurve(27, 0, 0);
