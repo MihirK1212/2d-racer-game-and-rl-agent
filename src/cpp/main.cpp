@@ -9,6 +9,8 @@
 #include "./entity/car/car.h"
 #include "./engine/vector.h"
 #include "./engine/coordinates.h"
+#include "./engine/collision/collision.h"
+#include "./entity/curve/circular_curve.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -108,10 +110,29 @@ void drawDirectionArrow(sf::RenderWindow &window,
     window.draw(arrow);
 }
 
+void drawCurve(sf::RenderWindow &window,
+               CircularCurve &curve,
+               CoordinateTransform &coordTransform)
+{
+    vector<Curve2DPoint> points = curve.getCachedPoints();
+    int numPoints = points.size(); 
+    for(size_t i = 0; i < numPoints - 1; i++)
+    {
+        sf::Vertex line[] =
+        {
+            sf::Vertex(coordTransform.gameToScreenPoint(points[i].position)),
+            sf::Vertex(coordTransform.gameToScreenPoint(points[i+1].position))
+        };
+
+        window.draw(line, 2, sf::Lines);
+    }
+}
+
 void render(sf::RenderWindow &window,
             Car *car,
             CoordinateTransform &coordTransform,
-            sf::RectangleShape &carShape)
+            sf::RectangleShape &carShape,
+            CircularCurve &curve)
 {
     Vector2D screenPos = coordTransform.gameToScreenPoint(car->getPosition());
     carShape.setPosition({static_cast<float>(screenPos.x),
@@ -130,6 +151,8 @@ void render(sf::RenderWindow &window,
 
     drawDirectionArrow(window, screenPos, screenDir);
 
+    drawCurve(window, curve, coordTransform);
+
     window.display();
 }
 
@@ -141,6 +164,9 @@ int main()
 
     Car *car = new Car(0, 0, 0.7, 1.5);
 
+    CircularCurve curve(10);
+    curve.generate(0, 360, 100);
+
     sf::RectangleShape carShape = createCarShape(car, coordTransform);
 
     while (window.isOpen())
@@ -151,7 +177,7 @@ int main()
 
         updateGame(car);
 
-        render(window, car, coordTransform, carShape);
+        render(window, car, coordTransform, carShape, curve);
     }
 
     delete car;
