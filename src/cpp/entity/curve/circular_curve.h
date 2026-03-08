@@ -6,7 +6,7 @@
 class CircularCurve : public ParametricCurve2D {
     public:
 
-    explicit CircularCurve(float radius);
+    explicit CircularCurve(float radius, double centerX, double centerY);
 
     protected:
 
@@ -14,6 +14,8 @@ class CircularCurve : public ParametricCurve2D {
 
     private:
     float r;
+    double centerX;
+    double centerY;
 };
 
 #endif

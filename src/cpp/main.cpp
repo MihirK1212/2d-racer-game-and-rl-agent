@@ -141,7 +141,8 @@ void render(sf::RenderWindow &window,
             Car *car,
             CoordinateTransform &coordTransform,
             sf::RectangleShape &carShape,
-            CircularCurve &curve)
+            CircularCurve &innerBorder,
+            CircularCurve &outerBorder)
 {
     Vector2D screenPos = coordTransform.gameToScreenPoint(car->getPosition());
     carShape.setPosition({static_cast<float>(screenPos.x),
@@ -160,7 +161,8 @@ void render(sf::RenderWindow &window,
 
     drawDirectionArrow(window, screenPos, screenDir);
 
-    drawCurve(window, curve, coordTransform);
+    drawCurve(window, innerBorder, coordTransform);
+    drawCurve(window, outerBorder, coordTransform);
 
     window.display();
 }
@@ -173,8 +175,9 @@ int main()
 
     Car *car = new Car(0, 0, 0.7, 1.5);
 
-    CircularCurve curve(10);
-    curve.generate(0, 360, 100);
+    CircularCurve innerBorder(20, 0, 0), outerBorder(27, 0, 0);
+    innerBorder.generate(0, 360, 100);
+    outerBorder.generate(0, 360, 100);
 
     sf::RectangleShape carShape = createCarShape(car, coordTransform);
 
@@ -186,7 +189,7 @@ int main()
 
         updateGame(car);
 
-        render(window, car, coordTransform, carShape, curve);
+        render(window, car, coordTransform, carShape, innerBorder, outerBorder);
     }
 
     delete car;
