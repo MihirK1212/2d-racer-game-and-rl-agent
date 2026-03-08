@@ -13,6 +13,12 @@ struct Curve2DPoint {
     Vector2D position;
 };
 
+struct ClosestPointResult {
+    Vector2D position;
+    double theta;
+    double distance;
+};
+
 class ParametricCurve2D {
     protected:
 
@@ -39,6 +45,16 @@ class ParametricCurve2D {
     void generate(double startThetaDeg, double endThetaDeg, size_t numPoints);
 
     const std::vector<Curve2DPoint>& getCachedPoints() const;
+
+    /** Tangent direction (unit vector) via central finite difference. */
+    Vector2D tangentAt(double thetaDegrees) const;
+
+    /** Outward-pointing unit normal (tangent rotated 90 deg clockwise).
+     *  "Outward" assumes the curve is parameterised counter-clockwise. */
+    Vector2D outwardNormalAt(double thetaDegrees) const;
+
+    /** Finds the closest point on the cached polyline to a world-space point. */
+    ClosestPointResult closestPointTo(const Vector2D& point) const;
 };
 
 #endif
