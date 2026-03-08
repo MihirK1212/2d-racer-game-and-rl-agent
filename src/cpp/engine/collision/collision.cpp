@@ -6,7 +6,7 @@
 #include "../../entity/car/car.h"
 #include "../../entity/curve/curve.h"
 
-static constexpr double WALL_RESTITUTION  = 0.1;
+static constexpr double WALL_RESTITUTION  = 0.3;
 static constexpr double CAR_RESTITUTION   = 0.4;
 static constexpr double SKIN_WIDTH        = 0.01; // small buffer to prevent surface oscillation
 
