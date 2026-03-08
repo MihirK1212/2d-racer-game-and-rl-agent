@@ -13,8 +13,20 @@ struct Vector2D {
         return Vector2D(x + other.x, y + other.y);
     }
 
+    Vector2D operator-(const Vector2D& other) const {
+        return Vector2D(x - other.x, y - other.y);
+    }
+
     Vector2D operator*(double scalar) const {
         return Vector2D(x * scalar, y * scalar);
+    }
+
+    static double dot(const Vector2D& a, const Vector2D& b) {
+        return a.x * b.x + a.y * b.y;
+    }
+
+    static double cross(const Vector2D& a, const Vector2D& b) {
+        return a.x * b.y - a.y * b.x;
     }
 
     double magnitude() const {
