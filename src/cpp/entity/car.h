@@ -32,7 +32,7 @@ class Car {
         double maxSpeedForward = 20, double maxSpeedBackward = 10, 
         double driveAcceleration = 2.5, double brakeAcceleration = 7.5,
         double maxTangentialAcceleration = 10,
-        double friction = 0.1
+        double friction = 0.5
     );
 
     // Getters
