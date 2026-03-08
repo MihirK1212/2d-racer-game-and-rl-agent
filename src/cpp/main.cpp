@@ -114,7 +114,7 @@ void drawCurve(sf::RenderWindow &window,
                CircularCurve &curve,
                CoordinateTransform &coordTransform)
 {
-    vector<Curve2DPoint> points = curve.getCachedPoints();
+    std::vector<Curve2DPoint> points = curve.getCachedPoints();
     int numPoints = points.size(); 
     for(size_t i = 0; i < numPoints - 1; i++)
     {
