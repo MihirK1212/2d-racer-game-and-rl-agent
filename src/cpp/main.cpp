@@ -86,8 +86,7 @@ int main()
         car->move(1.0 / FRAME_RATE);
         
         // 4. Render — transform game state to screen coordinates
-        Vector2D screenPos = coordTransform.gameToScreenPoint(
-            Vector2D(car->getX(), car->getY()));
+        Vector2D screenPos = coordTransform.gameToScreenPoint(car->getPosition());
         carShape.setPosition({static_cast<float>(screenPos.x),
                               static_cast<float>(screenPos.y)});
 

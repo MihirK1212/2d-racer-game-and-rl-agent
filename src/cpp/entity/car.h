@@ -6,8 +6,7 @@
 class Car {
     // units are in meters and seconds
 
-    double x; // position of the center of the car on the x-axis
-    double y; // position of the center of the car on the y-axis
+    Vector2D position; // position of the center of the car
     double width; // width of the car (meters)
     double height; // height of the car (meters)
 
@@ -36,12 +35,26 @@ class Car {
         double friction = 0.1
     );
 
-    double getX();
-    double getY();
-    double getWidth();
-    double getHeight();
-    Vector2D getVelocity(); // get the velocity of the car
-    Vector2D getDirection(); // get the forward direction of the car
+    // Getters
+    Vector2D getPosition() const;
+    double getWidth() const;
+    double getHeight() const;
+    double getSpeed() const;
+    double getTangentialAcceleration() const;
+    double getMaxSpeedForward() const;
+    double getMaxSpeedBackward() const;
+    double getDriveAcceleration() const;
+    double getBrakeAcceleration() const;
+    double getMaxTangentialAcceleration() const;
+    double getFriction() const;
+    Vector2D getVelocity() const; // velocity vector of the car
+    Vector2D getDirection() const; // forward direction of the car
+
+    // Setters (only for properties that can change after construction)
+    void setPosition(Vector2D pos);
+    void setSpeed(double speed);
+    void setTangentialAcceleration(double tangentialAcceleration);
+    void setDirection(Vector2D direction);
 
     void move(double dt); // move the car for the given time step
 
@@ -51,7 +64,6 @@ class Car {
 
     void rotateAntiClockwise(double angleDegrees); // rotate the car anti-clockwise by the given angle (in degrees)
     void rotateClockwise(double angleDegrees); // rotate the car clockwise by the given angle (in degrees)
-
 
     void printCarState();
 };

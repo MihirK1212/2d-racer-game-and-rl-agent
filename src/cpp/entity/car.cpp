@@ -19,8 +19,7 @@ Car::Car(
     double maxTangentialAcceleration_val,
     double friction_val
 ) {
-    this->x = x_val;
-    this->y = y_val;
+    this->position = Vector2D(x_val, y_val);
     this->width = width_val;
     this->height = height_val;
     this->maxSpeedForward = maxSpeedForward_val;
@@ -34,34 +33,89 @@ Car::Car(
     this->friction = friction_val;
 }
 
-double Car::getX()
+Vector2D Car::getPosition() const
 {
-    return x;
+    return position;
 }
 
-double Car::getY()
-{
-    return y;
-}
-
-double Car::getWidth()
+double Car::getWidth() const
 {
     return width;
 }
 
-double Car::getHeight()
+double Car::getHeight() const
 {
     return height;
 }
 
-Vector2D Car::getVelocity()
+double Car::getSpeed() const
+{
+    return speed;
+}
+
+double Car::getTangentialAcceleration() const
+{
+    return tangentialAcceleration;
+}
+
+double Car::getMaxSpeedForward() const
+{
+    return maxSpeedForward;
+}
+
+double Car::getMaxSpeedBackward() const
+{
+    return maxSpeedBackward;
+}
+
+double Car::getDriveAcceleration() const
+{
+    return driveAcceleration;
+}
+
+double Car::getBrakeAcceleration() const
+{
+    return brakeAcceleration;
+}
+
+double Car::getMaxTangentialAcceleration() const
+{
+    return maxTangentialAcceleration;
+}
+
+double Car::getFriction() const
+{
+    return friction;
+}
+
+Vector2D Car::getVelocity() const
 {
     return direction * speed;
 }
 
-Vector2D Car::getDirection()
+Vector2D Car::getDirection() const
 {
     return direction;
+}
+
+void Car::setPosition(Vector2D pos)
+{
+    this->position = pos;
+}
+
+void Car::setSpeed(double speed)
+{
+    this->speed = speed;
+}
+
+void Car::setTangentialAcceleration(double tangentialAcceleration)
+{
+    this->tangentialAcceleration = tangentialAcceleration;
+}
+
+void Car::setDirection(Vector2D direction)
+{
+    this->direction = direction;
 }
 
 void Car::move(double dt)
@@ -85,8 +139,8 @@ void Car::move(double dt)
 
     speed = std::clamp(speed, -maxSpeedBackward, maxSpeedForward);
 
-    x += speed * direction.x * dt;
-    y += speed * direction.y * dt;
+    position.x += speed * direction.x * dt;
+    position.y += speed * direction.y * dt;
 }
 
 
@@ -152,7 +206,7 @@ void Car::printCarState()
 {
     std::cout << "--------------------------------" << "\n";
     std::cout << "Car state: " << "\n";
-    std::cout << "Position: (" << x << ", " << y << ")" << "\n";
+    std::cout << "Position: (" << position.x << ", " << position.y << ")" << "\n";
     std::cout << "Speed: " << speed << "\n";
     std::cout << "Direction: (" << direction.x << ", " << direction.y << ")" << "\n";
     std::cout << "Tangential Acceleration: " << tangentialAcceleration << "\n";
