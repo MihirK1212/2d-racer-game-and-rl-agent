@@ -17,10 +17,10 @@ Car::Car(
     double driveAcceleration_val,
     double brakeAcceleration_val,
     double maxTangentialAcceleration_val,
-    double friction_val
+    double friction_val,
+    double steeringSpeedFactor_val
 ) {
-    this->x = x_val;
-    this->y = y_val;
+    this->position = Vector2D(x_val, y_val);
     this->width = width_val;
     this->height = height_val;
     this->maxSpeedForward = maxSpeedForward_val;
@@ -32,36 +32,97 @@ Car::Car(
     this->direction = Vector2D(0, 1);
     this->tangentialAcceleration = 0;
     this->friction = friction_val;
+    this->steeringSpeedFactor = steeringSpeedFactor_val;
 }
 
-double Car::getX()
+Vector2D Car::getPosition() const
 {
-    return x;
+    return position;
 }
 
-double Car::getY()
-{
-    return y;
-}
-
-double Car::getWidth()
+double Car::getWidth() const
 {
     return width;
 }
 
-double Car::getHeight()
+double Car::getHeight() const
 {
     return height;
 }
 
-Vector2D Car::getVelocity()
+double Car::getSpeed() const
+{
+    return speed;
+}
+
+double Car::getTangentialAcceleration() const
+{
+    return tangentialAcceleration;
+}
+
+double Car::getMaxSpeedForward() const
+{
+    return maxSpeedForward;
+}
+
+double Car::getMaxSpeedBackward() const
+{
+    return maxSpeedBackward;
+}
+
+double Car::getDriveAcceleration() const
+{
+    return driveAcceleration;
+}
+
+double Car::getBrakeAcceleration() const
+{
+    return brakeAcceleration;
+}
+
+double Car::getMaxTangentialAcceleration() const
+{
+    return maxTangentialAcceleration;
+}
+
+double Car::getFriction() const
+{
+    return friction;
+}
+
+double Car::getSteeringSpeedFactor() const
+{
+    return steeringSpeedFactor;
+}
+
+Vector2D Car::getVelocity() const
 {
     return direction * speed;
 }
 
-Vector2D Car::getDirection()
+Vector2D Car::getDirection() const
 {
     return direction;
+}
+
+void Car::setPosition(Vector2D pos)
+{
+    this->position = pos;
+}
+
+void Car::setSpeed(double speed)
+{
+    this->speed = speed;
+}
+
+void Car::setTangentialAcceleration(double tangentialAcceleration)
+{
+    this->tangentialAcceleration = tangentialAcceleration;
+}
+
+void Car::setDirection(Vector2D direction)
+{
+    this->direction = direction;
 }
 
 void Car::move(double dt)
@@ -85,8 +146,8 @@ void Car::move(double dt)
 
     speed = std::clamp(speed, -maxSpeedBackward, maxSpeedForward);
 
-    x += speed * direction.x * dt;
-    y += speed * direction.y * dt;
+    position.x += speed * direction.x * dt;
+    position.y += speed * direction.y * dt;
 }
 
 
@@ -134,16 +195,35 @@ void Car::accelerateBackward()
 }
 
 
+/*
+The car's turning behavior is modeled using a simple equation:
+effectiveTurnRate = angle / (1 + k * |speed|)
+where:
+angle is the angle by which the car is turned (in degrees)
+k is the steering speed factor (default 0.1)
+speed is the car's speed (in meters per second)
+effectiveTurnRate is the effective turn rate of the car (in degrees per second)
+
+Behavior with k = 0.1:
+Speed (m/s)	    Steering fraction (percentage of full angle per frame)
+0	            100% (full 3°/frame)
+5	            67% (2°/frame)
+10	            50% (1.5°/frame)
+20 (max)	    33% (1°/frame)
+*/
+
 void Car::rotateAntiClockwise(double angleDegrees) {
     if(std::abs(speed) > 0.01) {
-        double angleRadians = angleDegrees * M_PI / 180.0;
+        double effectiveAngle = angleDegrees / (1.0 + steeringSpeedFactor * std::abs(speed));
+        double angleRadians = effectiveAngle * M_PI / 180.0;
         direction = direction.rotate(angleRadians).normalize();
     }
 }
 
 void Car::rotateClockwise(double angleDegrees) {
     if(std::abs(speed) > 0.01) {
-        double angleRadians = angleDegrees * M_PI / 180.0;
+        double effectiveAngle = angleDegrees / (1.0 + steeringSpeedFactor * std::abs(speed));
+        double angleRadians = effectiveAngle * M_PI / 180.0;
         direction = direction.rotate(-angleRadians).normalize();
     }
 }
@@ -152,7 +232,7 @@ void Car::printCarState()
 {
     std::cout << "--------------------------------" << "\n";
     std::cout << "Car state: " << "\n";
-    std::cout << "Position: (" << x << ", " << y << ")" << "\n";
+    std::cout << "Position: (" << position.x << ", " << position.y << ")" << "\n";
     std::cout << "Speed: " << speed << "\n";
     std::cout << "Direction: (" << direction.x << ", " << direction.y << ")" << "\n";
     std::cout << "Tangential Acceleration: " << tangentialAcceleration << "\n";
