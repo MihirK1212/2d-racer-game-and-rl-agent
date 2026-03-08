@@ -5,6 +5,7 @@
 #include <cmath>
 #include <optional>
 #include <string>
+#include <iostream>
 
 #include "./entity/car/car.h"
 #include "./engine/vector.h"
@@ -139,6 +140,9 @@ void drawCurve(sf::RenderWindow &window,
 
 void handleCollisions(std::vector<Car*> cars, CircularCurve* innerBorder, CircularCurve* outerBorder)
 {
+    std::cout << "Handling collisions" << std::endl;
+    std::cout << "Number of cars: " << numCars << std::endl;
+
     int numCars = cars.size();
     for (int i = 0; i < numCars; i++)
     {
