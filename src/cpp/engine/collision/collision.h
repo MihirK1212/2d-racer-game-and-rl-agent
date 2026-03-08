@@ -4,6 +4,7 @@
 #include "../vector.h"
 #include "../rectangle_obb.h"
 #include "../../entity/car/car.h"
+#include "../../entity/curve/curve.h"
 
 struct CollisionResult {
     bool collided;
