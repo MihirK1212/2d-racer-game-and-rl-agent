@@ -74,6 +74,23 @@ void handleContinuousInput(Car *car)
         car->accelerateBackward();
 }
 
+void handleContinuousInputCar2(Car *car)
+{
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A))
+        car->rotateAntiClockwise(3);
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D))
+        car->rotateClockwise(3);
+
+    car->setNoInputAcceleration();
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W))
+        car->accelerateForward();
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S))
+        car->accelerateBackward();
+}
+
 void updateGame(Car *car)
 {
     car->move(1.0 / FRAME_RATE);
@@ -228,7 +245,7 @@ int main()
 
     std::vector<sf::RectangleShape> carShapes;
 
-    for (Car *car : cars)
+    for (Car *car : cars) 
         carShapes.push_back(createCarShape(car, coordTransform));
 
     while (window.isOpen())
@@ -236,8 +253,10 @@ int main()
         processEvents(window, cars[0]);
 
         handleContinuousInput(cars[0]);
+        handleContinuousInputCar2(cars[1]);
 
         updateGame(cars[0]);
+        updateGame(cars[1]);
 
         handleCollisions(cars, innerBorder, outerBorder);
 
