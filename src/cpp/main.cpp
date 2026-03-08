@@ -124,8 +124,12 @@ void drawCurve(sf::RenderWindow &window,
 
     for (size_t i = 0; i < numPoints; ++i)
     {
+        Vector2D screenPos = coordTransform.gameToScreenPoint(points[i].position);
         vertices[i].position =
-        coordTransform.gameToScreenPoint(points[i].position);
+        {
+            static_cast<float>(screenPos.x),
+            static_cast<float>(screenPos.y)
+        };
 
         vertices[i].color = sf::Color::White; // optional
     }
