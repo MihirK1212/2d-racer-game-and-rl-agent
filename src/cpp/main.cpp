@@ -120,7 +120,7 @@ void drawCurve(sf::RenderWindow &window,
     if (numPoints < 2)
     return;
 
-    sf::VertexArray vertices(sf::LineStrip, numPoints);
+    sf::VertexArray vertices(sf::PrimitiveType::LineStrip, numPoints);
 
     for (size_t i = 0; i < numPoints; ++i)
     {
