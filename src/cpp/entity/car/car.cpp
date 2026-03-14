@@ -247,7 +247,7 @@ void Car::rotateClockwise(double angleDegrees) {
     }
 }
 
-void Car::printCarState()
+void Car::printCarState() const
 {
     std::cout << "--------------------------------" << "\n";
     std::cout << "Car state: " << "\n";
