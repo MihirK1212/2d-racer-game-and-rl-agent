@@ -14,6 +14,7 @@
 #include "./engine/collision/collision.h"
 #include "./entity/curve/circular_curve.h"
 #include "./interaction/car/input/keyboard_car_input_handler.h"
+#include "./interaction/car/input/shm_car_input_handler.h"
 #include "./interaction/car/export/console_car_state_exporter.h"
 #include "./interaction/car/export/shm_car_state_exporter.h"
 #include "./interaction/ipc/shared_memory.h"
@@ -47,7 +48,7 @@ sf::RectangleShape createCarShape(const Car &car, CoordinateTransform &coordTran
     return shape;
 }
 
-void processEvents(sf::RenderWindow &window, const Car &car,
+void processEvents(sf::RenderWindow &window, const Car &externallyControlledCar,
                    const std::vector<std::unique_ptr<CarStateExporter>> &outputHandlers)
 {
     while (const std::optional event = window.pollEvent())
@@ -59,7 +60,7 @@ void processEvents(sf::RenderWindow &window, const Car &car,
         {
             if (keyPressed->code == sf::Keyboard::Key::Num9) {
                 for (const auto &outputHandler : outputHandlers) {
-                    outputHandler->exportCarState(car);
+                    outputHandler->exportCarState(externallyControlledCar);
                 }
             }
         }
@@ -220,14 +221,7 @@ int main()
     std::vector<sf::RectangleShape> carShapes;
 
     auto inputHandler1 = std::make_unique<KeyboardCarInputHandler>();
-
-    CarKeyBindings wasdBindings {
-        sf::Keyboard::Key::A,  // antiClockwise
-        sf::Keyboard::Key::D,  // clockwise
-        sf::Keyboard::Key::W,  // forward
-        sf::Keyboard::Key::S   // backward
-    };
-    auto inputHandler2 = std::make_unique<KeyboardCarInputHandler>(wasdBindings);
+    auto inputHandler2 = std::make_unique<SHMCarInputHandler>();
 
     for (const auto &car : cars)
         carShapes.push_back(createCarShape(*car, coordTransform));
@@ -240,7 +234,7 @@ int main()
 
     while (window.isOpen())
     {
-        processEvents(window, *cars[0], outputHandlers);
+        processEvents(window, *cars[1], outputHandlers);
 
         inputHandler1->apply(*cars[0]);
         inputHandler2->apply(*cars[1]);
