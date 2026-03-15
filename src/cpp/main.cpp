@@ -221,7 +221,7 @@ int main()
     std::vector<sf::RectangleShape> carShapes;
 
     auto inputHandler1 = std::make_unique<KeyboardCarInputHandler>();
-    auto inputHandler2 = std::make_unique<SHMCarInputHandler>();
+    auto inputHandler2 = std::make_unique<SHMCarInputHandler>(shm);
 
     for (const auto &car : cars)
         carShapes.push_back(createCarShape(*car, coordTransform));
