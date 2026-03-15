@@ -10,44 +10,49 @@ SHM_SIZE = 56
 INPUT_FORMAT = "4B"
 STATE_FORMAT = "B3x6d"
 
-
+# Updated keys dictionary
 keys_pressed = {
-    "up": False,
-    "down": False,
-    "left": False,
-    "right": False,
+    "w": False,
+    "s": False,
+    "a": False,
+    "d": False,
     "esc": False
 }
 
 def on_press(key):
-    if key == keyboard.Key.up:
-        keys_pressed["up"] = True
-    elif key == keyboard.Key.down:
-        keys_pressed["down"] = True
-    elif key == keyboard.Key.left:
-        keys_pressed["left"] = True
-    elif key == keyboard.Key.right:
-        keys_pressed["right"] = True
-    elif key == keyboard.Key.esc:
-        keys_pressed["esc"] = True
+    try:
+        if key.char == 'w':
+            keys_pressed["w"] = True
+        elif key.char == 's':
+            keys_pressed["s"] = True
+        elif key.char == 'a':
+            keys_pressed["a"] = True
+        elif key.char == 'd':
+            keys_pressed["d"] = True
+    except AttributeError:
+        # Handle special keys like ESC
+        if key == keyboard.Key.esc:
+            keys_pressed["esc"] = True
 
 def on_release(key):
-    if key == keyboard.Key.up:
-        keys_pressed["up"] = False
-    elif key == keyboard.Key.down:
-        keys_pressed["down"] = False
-    elif key == keyboard.Key.left:
-        keys_pressed["left"] = False
-    elif key == keyboard.Key.right:
-        keys_pressed["right"] = False
-    elif key == keyboard.Key.esc:
-        keys_pressed["esc"] = False
+    try:
+        if key.char == 'w':
+            keys_pressed["w"] = False
+        elif key.char == 's':
+            keys_pressed["s"] = False
+        elif key.char == 'a':
+            keys_pressed["a"] = False
+        elif key.char == 'd':
+            keys_pressed["d"] = False
+    except AttributeError:
+        if key == keyboard.Key.esc:
+            keys_pressed["esc"] = False
 
 listener = keyboard.Listener(on_press=on_press, on_release=on_release)
 listener.start()
 
 def is_key_pressed(key):
-    return keys_pressed[key]
+    return keys_pressed.get(key, False)
 
 
 def main():
@@ -61,15 +66,15 @@ def main():
     buffer = shm.buf
 
     print("Connected to shared memory.")
-    print("Use arrow keys to drive, ESC to quit.\n")
+    print("Use WASD to drive, ESC to quit.\n")
 
     try:
         while True:
-
-            up    = int(is_key_pressed("up"))
-            down  = int(is_key_pressed("down"))
-            left  = int(is_key_pressed("left"))
-            right = int(is_key_pressed("right"))
+            # Map WASD to the existing logic
+            up    = int(is_key_pressed("w"))
+            down  = int(is_key_pressed("s"))
+            left  = int(is_key_pressed("a"))
+            right = int(is_key_pressed("d"))
 
             # Write inputs (bytes 0-3)
             buffer[0:4] = struct.pack("4B", up, down, left, right)
@@ -78,7 +83,6 @@ def main():
             state_ready = struct.unpack("B", buffer[4:5])[0]
 
             if state_ready:
-
                 pos_x, pos_y, speed, dir_x, dir_y, tangential_accel = struct.unpack(
                     "6d", buffer[8:56]
                 )
