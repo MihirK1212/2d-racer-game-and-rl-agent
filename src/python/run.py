@@ -1,6 +1,6 @@
 import struct
 import time
-import keyboard
+from pynput import keyboard
 from multiprocessing import shared_memory
 
 SHM_NAME = "RacerGameSHM"
@@ -10,8 +10,44 @@ SHM_SIZE = 56
 INPUT_FORMAT = "4B"
 STATE_FORMAT = "B3x6d"
 
+
+keys_pressed = {
+    "up": False,
+    "down": False,
+    "left": False,
+    "right": False,
+    "esc": False
+}
+
+def on_press(key):
+    if key == keyboard.Key.up:
+        keys_pressed["up"] = True
+    elif key == keyboard.Key.down:
+        keys_pressed["down"] = True
+    elif key == keyboard.Key.left:
+        keys_pressed["left"] = True
+    elif key == keyboard.Key.right:
+        keys_pressed["right"] = True
+    elif key == keyboard.Key.esc:
+        keys_pressed["esc"] = True
+
+def on_release(key):
+    if key == keyboard.Key.up:
+        keys_pressed["up"] = False
+    elif key == keyboard.Key.down:
+        keys_pressed["down"] = False
+    elif key == keyboard.Key.left:
+        keys_pressed["left"] = False
+    elif key == keyboard.Key.right:
+        keys_pressed["right"] = False
+    elif key == keyboard.Key.esc:
+        keys_pressed["esc"] = False
+
+listener = keyboard.Listener(on_press=on_press, on_release=on_release)
+listener.start()
+
 def is_key_pressed(key):
-    return keyboard.is_pressed(key)
+    return keys_pressed[key]
 
 
 def main():
@@ -67,6 +103,7 @@ def main():
         print("\nInterrupted.")
 
     finally:
+        listener.stop()
         shm.close()
 
 
