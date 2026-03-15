@@ -220,17 +220,17 @@ int main()
 
     std::vector<sf::RectangleShape> carShapes;
 
+    SharedGameMemory shm;
+
     auto inputHandler1 = std::make_unique<KeyboardCarInputHandler>();
     auto inputHandler2 = std::make_unique<SHMCarInputHandler>(shm);
-
-    for (const auto &car : cars)
-        carShapes.push_back(createCarShape(*car, coordTransform));
-
-    SharedGameMemory shm;
 
     std::vector<std::unique_ptr<CarStateExporter>> outputHandlers;
     outputHandlers.push_back(std::make_unique<ConsoleCarStateExporter>());
     outputHandlers.push_back(std::make_unique<SHMCarStateExporter>(shm));
+    
+    for (const auto &car : cars)
+        carShapes.push_back(createCarShape(*car, coordTransform));
 
     while (window.isOpen())
     {
