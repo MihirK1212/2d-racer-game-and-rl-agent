@@ -18,6 +18,7 @@
 #include "./interaction/car/export/console_car_state_exporter.h"
 #include "./interaction/car/export/shm_car_state_exporter.h"
 #include "./interaction/ipc/shared_memory.h"
+#include "./interaction/car/synchronizer.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -48,24 +49,6 @@ sf::RectangleShape createCarShape(const Car &car, CoordinateTransform &coordTran
     return shape;
 }
 
-void processEvents(sf::RenderWindow &window, const Car &externallyControlledCar,
-                   const std::vector<std::unique_ptr<CarStateExporter>> &outputHandlers)
-{
-    while (const std::optional event = window.pollEvent())
-    {
-        if (event->is<sf::Event::Closed>())
-            window.close();
-
-        if (const auto *keyPressed = event->getIf<sf::Event::KeyPressed>())
-        {
-            if (keyPressed->code == sf::Keyboard::Key::Num9) {
-                for (const auto &outputHandler : outputHandlers) {
-                    outputHandler->exportCarState(externallyControlledCar);
-                }
-            }
-        }
-    }
-}
 
 void updateGame(Car &car)
 {
@@ -206,19 +189,8 @@ int main()
 {
     sf::RenderWindow window = createWindow();
 
-    CoordinateTransform coordTransform(1000, 600);
-
-    std::vector<std::unique_ptr<Car>> cars;
-    cars.push_back(std::make_unique<Car>(22.5, 0, 0.7, 1.5));
-    cars.push_back(std::make_unique<Car>(25.5, 0, 0.7, 1.5));
-
-    auto innerBorder = std::make_unique<CircularCurve>(20, 0, 0);
-    auto outerBorder = std::make_unique<CircularCurve>(28, 0, 0);
-
-    innerBorder->generate(0, 360, 100);
-    outerBorder->generate(0, 360, 100);
-
-    std::vector<sf::RectangleShape> carShapes;
+    std::unique_ptr<Car> userControlledCar = std::make_unique<Car>(22.5, 0, 0.7, 1.5);
+    std::unique_ptr<Car> aiControlledCar = std::make_unique<Car>(25.5, 0, 0.7, 1.5);
 
     SharedGameMemory shm;
 
@@ -228,23 +200,57 @@ int main()
     std::vector<std::unique_ptr<CarStateExporter>> outputHandlers;
     outputHandlers.push_back(std::make_unique<ConsoleCarStateExporter>());
     outputHandlers.push_back(std::make_unique<SHMCarStateExporter>(shm));
-    
+
+    auto synchronizer = std::make_unique<CarSynchronizer>(false, shm);
+
+    CoordinateTransform coordTransform(1000, 600);
+
+    auto innerBorder = std::make_unique<CircularCurve>(20, 0, 0);
+    auto outerBorder = std::make_unique<CircularCurve>(28, 0, 0);
+
+    innerBorder->generate(0, 360, 100);
+    outerBorder->generate(0, 360, 100);
+
+    std::vector<sf::RectangleShape> carShapes;
+
     for (const auto &car : cars)
         carShapes.push_back(createCarShape(*car, coordTransform));
 
     while (window.isOpen())
     {
-        processEvents(window, *cars[1], outputHandlers);
+        while (const std::optional event = window.pollEvent())
+        {
+            if (event->is<sf::Event::Closed>())
+                window.close();
+        }
 
-        inputHandler1->apply(*cars[0]);
-        inputHandler2->apply(*cars[1]);
+        if(synchronizer->isStepMode()) {
+            while(!synchronizer->isActionReady()){
+                // spin or sleep
+            }
+            synchronizer->setActionReady(false);
 
-        updateGame(*cars[0]);
-        updateGame(*cars[1]);
+            if(synchronizer->isResetFlagSet()){
+                // reset episode
+                synchronizer->setResetFlag(false);
+            }
+        }
 
-        handleCollisions(cars, innerBorder.get(), outerBorder.get());
+        inputHandler1->apply(*userControlledCar);
+        inputHandler2->apply(*aiControlledCar);
 
-        render(window, cars, carShapes, coordTransform, innerBorder.get(), outerBorder.get());
+        updateGame(*userControlledCar);
+        updateGame(*aiControlledCar);
+
+        handleCollisions({userControlledCar, aiControlledCar}, innerBorder.get(), outerBorder.get());
+
+        render(window, {userControlledCar, aiControlledCar}, carShapes, coordTransform, innerBorder.get(), outerBorder.get());
+        
+        if(synchronizer->isStepMode()) {
+            for (const auto &outputHandler : outputHandlers) {
+                outputHandler->exportCarState(externallyControlledCar);
+            }
+        }
     }
 
     return 0;

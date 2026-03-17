@@ -28,23 +28,6 @@ class SHMCarStateExporter: public CarStateExporter {
         data->dir_y = dir.y;
         data->tangential_accel = car.getTangentialAcceleration();
         data->state_ready = 1;
-
-        verifyData();
-    }
-
-    void verifyData() {
-        SharedGameData* data = sgm.getData();
-        if (!data) {
-            return;
-        }
-        std::cout << "Data is not null" << std::endl;
-        std::cout << "pos_x: " << data->pos_x << std::endl;
-        std::cout << "pos_y: " << data->pos_y << std::endl;
-        std::cout << "speed: " << data->speed << std::endl;
-        std::cout << "dir_x: " << data->dir_x << std::endl;
-        std::cout << "dir_y: " << data->dir_y << std::endl;
-        std::cout << "tangential_accel: " << data->tangential_accel << std::endl;
-        std::cout << "state_ready: " << data->state_ready << std::endl;
     }
 };
 
