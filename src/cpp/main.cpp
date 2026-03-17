@@ -189,12 +189,9 @@ int main()
 {
     sf::RenderWindow window = createWindow();
 
-    std::unique_ptr<Car> userControlledCar = std::make_unique<Car>(22.5, 0, 0.7, 1.5);
-    std::unique_ptr<Car> aiControlledCar = std::make_unique<Car>(25.5, 0, 0.7, 1.5);
-
     std::vector<std::unique_ptr<Car>> cars;
-    cars.push_back(userControlledCar);
-    cars.push_back(aiControlledCar);
+    cars.push_back(std::make_unique<Car>(22.5, 0, 0.7, 1.5));
+    cars.push_back(std::make_unique<Car>(25.5, 0, 0.7, 1.5));
 
     SharedGameMemory shm;
 
@@ -240,11 +237,11 @@ int main()
             }
         }
 
-        inputHandler1->apply(*userControlledCar);
-        inputHandler2->apply(*aiControlledCar);
+        inputHandler1->apply(*cars[0]);
+        inputHandler2->apply(*cars[1]);
 
-        updateGame(*userControlledCar);
-        updateGame(*aiControlledCar);
+        updateGame(*cars[0]);
+        updateGame(*cars[1]);
 
         handleCollisions(cars, innerBorder.get(), outerBorder.get());
 
@@ -252,7 +249,7 @@ int main()
         
         if(synchronizer->isStepMode()) {
             for (const auto &outputHandler : outputHandlers) {
-                outputHandler->exportCarState(*aiControlledCar);
+                outputHandler->exportCarState(*cars[1]);
             }
         }
     }
