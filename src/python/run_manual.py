@@ -82,7 +82,7 @@ def main():
             buffer[4:5] = struct.pack("B", 1)
 
             # Get state_ready flag
-            state_ready = struct.unpack("B", buffer[4:5])[0]
+            state_ready = struct.unpack("B", buffer[5:6])[0]
 
             if state_ready:
                 pos_x, pos_y, speed, dir_x, dir_y, tangential_accel = struct.unpack(
