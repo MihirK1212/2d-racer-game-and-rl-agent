@@ -202,7 +202,7 @@ int main()
     outputHandlers.push_back(std::make_unique<ConsoleCarStateExporter>());
     outputHandlers.push_back(std::make_unique<SHMCarStateExporter>(shm));
 
-    auto synchronizer = std::make_unique<CarSynchronizer>(true, shm);
+    auto synchronizer = std::make_unique<CarSynchronizer>(false, shm);
 
     CoordinateTransform coordTransform(1000, 600);
 
