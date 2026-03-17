@@ -6,12 +6,18 @@
 #include <optional>
 #include <string>
 #include <iostream>
+#include <memory>
 
 #include "./entity/car/car.h"
 #include "./engine/vector.h"
 #include "./engine/coordinates.h"
 #include "./engine/collision/collision.h"
 #include "./entity/curve/circular_curve.h"
+#include "./interaction/car/input/keyboard_car_input_handler.h"
+#include "./interaction/car/input/shm_car_input_handler.h"
+#include "./interaction/car/export/console_car_state_exporter.h"
+#include "./interaction/car/export/shm_car_state_exporter.h"
+#include "./interaction/ipc/shared_memory.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -29,20 +35,21 @@ sf::RenderWindow createWindow()
     return window;
 }
 
-sf::RectangleShape createCarShape(Car *car, CoordinateTransform &coordTransform)
+sf::RectangleShape createCarShape(const Car &car, CoordinateTransform &coordTransform)
 {
-    sf::RectangleShape shape({static_cast<float>(coordTransform.metersToPixels(car->getWidth())),
-                              static_cast<float>(coordTransform.metersToPixels(car->getHeight()))});
+    sf::RectangleShape shape({static_cast<float>(coordTransform.metersToPixels(car.getWidth())),
+                              static_cast<float>(coordTransform.metersToPixels(car.getHeight()))});
 
     shape.setFillColor(sf::Color::Red);
 
-    shape.setOrigin({static_cast<float>(coordTransform.metersToPixels(car->getWidth()) / 2.0),
-                     static_cast<float>(coordTransform.metersToPixels(car->getHeight()) / 2.0)});
+    shape.setOrigin({static_cast<float>(coordTransform.metersToPixels(car.getWidth()) / 2.0),
+                     static_cast<float>(coordTransform.metersToPixels(car.getHeight()) / 2.0)});
 
     return shape;
 }
 
-void processEvents(sf::RenderWindow &window, Car *car)
+void processEvents(sf::RenderWindow &window, const Car &externallyControlledCar,
+                   const std::vector<std::unique_ptr<CarStateExporter>> &outputHandlers)
 {
     while (const std::optional event = window.pollEvent())
     {
@@ -51,49 +58,18 @@ void processEvents(sf::RenderWindow &window, Car *car)
 
         if (const auto *keyPressed = event->getIf<sf::Event::KeyPressed>())
         {
-            if (keyPressed->code == sf::Keyboard::Key::Num9)
-                car->printCarState();
+            if (keyPressed->code == sf::Keyboard::Key::Num9) {
+                for (const auto &outputHandler : outputHandlers) {
+                    outputHandler->exportCarState(externallyControlledCar);
+                }
+            }
         }
     }
 }
 
-void handleContinuousInput(Car *car)
+void updateGame(Car &car)
 {
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
-        car->rotateAntiClockwise(3);
-
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
-        car->rotateClockwise(3);
-
-    car->setNoInputAcceleration();
-
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))
-        car->accelerateForward();
-
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down))
-        car->accelerateBackward();
-}
-
-void handleContinuousInputCar2(Car *car)
-{
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A))
-        car->rotateAntiClockwise(3);
-
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D))
-        car->rotateClockwise(3);
-
-    car->setNoInputAcceleration();
-
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W))
-        car->accelerateForward();
-
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S))
-        car->accelerateBackward();
-}
-
-void updateGame(Car *car)
-{
-    car->move(1.0 / FRAME_RATE);
+    car.move(1.0 / FRAME_RATE);
 }
 
 void drawDirectionArrow(sf::RenderWindow &window,
@@ -155,15 +131,15 @@ void drawCurve(sf::RenderWindow &window,
     window.draw(vertices);
 }
 
-void handleCollisions(std::vector<Car *> cars,
+void handleCollisions(const std::vector<std::unique_ptr<Car>> &cars,
                       CircularCurve *innerBorder,
                       CircularCurve *outerBorder)
 {
-    int numCars = cars.size();
+    size_t numCars = cars.size();
 
-    for (int i = 0; i < numCars; i++)
+    for (size_t i = 0; i < numCars; i++)
     {
-        Car *car = cars[i];
+        Car *car = cars[i].get();
 
         CollisionResult resultInner = detectCarVsCurve(car, innerBorder);
         if (resultInner.collided)
@@ -174,13 +150,13 @@ void handleCollisions(std::vector<Car *> cars,
             resolveCarVsCurve(car, outerBorder, resultOuter);
     }
 
-    for (int i = 0; i < numCars; i++)
+    for (size_t i = 0; i < numCars; i++)
     {
-        Car *car1 = cars[i];
+        Car *car1 = cars[i].get();
 
-        for (int j = i + 1; j < numCars; j++)
+        for (size_t j = i + 1; j < numCars; j++)
         {
-            Car *car2 = cars[j];
+            Car *car2 = cars[j].get();
 
             CollisionResult result = detectCarVsCar(car1, car2);
             if (result.collided)
@@ -190,7 +166,7 @@ void handleCollisions(std::vector<Car *> cars,
 }
 
 void render(sf::RenderWindow &window,
-            std::vector<Car *> &cars,
+            const std::vector<std::unique_ptr<Car>> &cars,
             std::vector<sf::RectangleShape> &carShapes,
             CoordinateTransform &coordTransform,
             CircularCurve *innerBorder,
@@ -200,7 +176,7 @@ void render(sf::RenderWindow &window,
 
     for (size_t i = 0; i < cars.size(); i++)
     {
-        Car *car = cars[i];
+        Car *car = cars[i].get();
         sf::RectangleShape &shape = carShapes[i];
 
         Vector2D screenPos = coordTransform.gameToScreenPoint(car->getPosition());
@@ -232,42 +208,44 @@ int main()
 
     CoordinateTransform coordTransform(1000, 600);
 
-    std::vector<Car *> cars;
+    std::vector<std::unique_ptr<Car>> cars;
+    cars.push_back(std::make_unique<Car>(22.5, 0, 0.7, 1.5));
+    cars.push_back(std::make_unique<Car>(25.5, 0, 0.7, 1.5));
 
-    cars.push_back(new Car(22.5, 0, 0.7, 1.5));
-    cars.push_back(new Car(25.5, 0, 0.7, 1.5));
-
-    CircularCurve *innerBorder = new CircularCurve(20, 0, 0);
-    CircularCurve *outerBorder = new CircularCurve(28, 0, 0);
+    auto innerBorder = std::make_unique<CircularCurve>(20, 0, 0);
+    auto outerBorder = std::make_unique<CircularCurve>(28, 0, 0);
 
     innerBorder->generate(0, 360, 100);
     outerBorder->generate(0, 360, 100);
 
     std::vector<sf::RectangleShape> carShapes;
 
-    for (Car *car : cars) 
-        carShapes.push_back(createCarShape(car, coordTransform));
+    SharedGameMemory shm;
+
+    auto inputHandler1 = std::make_unique<KeyboardCarInputHandler>();
+    auto inputHandler2 = std::make_unique<SHMCarInputHandler>(shm);
+
+    std::vector<std::unique_ptr<CarStateExporter>> outputHandlers;
+    outputHandlers.push_back(std::make_unique<ConsoleCarStateExporter>());
+    outputHandlers.push_back(std::make_unique<SHMCarStateExporter>(shm));
+    
+    for (const auto &car : cars)
+        carShapes.push_back(createCarShape(*car, coordTransform));
 
     while (window.isOpen())
     {
-        processEvents(window, cars[0]);
+        processEvents(window, *cars[1], outputHandlers);
 
-        handleContinuousInput(cars[0]);
-        handleContinuousInputCar2(cars[1]);
+        inputHandler1->apply(*cars[0]);
+        inputHandler2->apply(*cars[1]);
 
-        updateGame(cars[0]);
-        updateGame(cars[1]);
+        updateGame(*cars[0]);
+        updateGame(*cars[1]);
 
-        handleCollisions(cars, innerBorder, outerBorder);
+        handleCollisions(cars, innerBorder.get(), outerBorder.get());
 
-        render(window, cars, carShapes, coordTransform, innerBorder, outerBorder);
+        render(window, cars, carShapes, coordTransform, innerBorder.get(), outerBorder.get());
     }
-
-    for (Car *car : cars)
-        delete car;
-
-    delete innerBorder;
-    delete outerBorder;
 
     return 0;
 }
