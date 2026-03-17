@@ -7,6 +7,8 @@
 #include <string>
 #include <iostream>
 #include <memory>
+#include <thread>
+#include <chrono>
 
 #include "./entity/car/car.h"
 #include "./engine/vector.h"
@@ -225,26 +227,27 @@ int main()
                 window.close();
         }
 
+        for (const auto &outputHandler : outputHandlers) {
+            outputHandler->exportCarState(*cars[1]);
+        }
+
         if(synchronizer->isStepMode()) {
-            for (const auto &outputHandler : outputHandlers) {
-                outputHandler->exportCarState(*cars[1]);
-            }
-
             while(!synchronizer->isActionReady()){
-                for(int i=0; i<10; i++){
-                    std::cout<<"Waiting for action ready"<<std::endl;
-                }
-            }
-            synchronizer->setActionReady(false);
-
-            if(synchronizer->isResetFlagSet()){
-                // reset episode
-                synchronizer->setResetFlag(false);
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
         }
 
         inputHandler1->apply(*cars[0]);
-        inputHandler2->apply(*cars[1]);
+
+        if(synchronizer->isActionReady()){
+            synchronizer->setActionReady(false);
+            inputHandler2->apply(*cars[1]);
+        }
+
+        if(synchronizer->isStepMode() && synchronizer->isResetFlagSet()){
+            // TODO: implement reset episode
+            synchronizer->setResetFlag(false);
+        }
 
         updateGame(*cars[0]);
         updateGame(*cars[1]);
