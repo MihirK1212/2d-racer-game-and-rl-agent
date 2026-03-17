@@ -192,6 +192,10 @@ int main()
     std::unique_ptr<Car> userControlledCar = std::make_unique<Car>(22.5, 0, 0.7, 1.5);
     std::unique_ptr<Car> aiControlledCar = std::make_unique<Car>(25.5, 0, 0.7, 1.5);
 
+    std::vector<std::unique_ptr<Car>> cars;
+    cars.push_back(userControlledCar);
+    cars.push_back(aiControlledCar);
+
     SharedGameMemory shm;
 
     auto inputHandler1 = std::make_unique<KeyboardCarInputHandler>();
@@ -242,9 +246,9 @@ int main()
         updateGame(*userControlledCar);
         updateGame(*aiControlledCar);
 
-        handleCollisions({userControlledCar, aiControlledCar}, innerBorder.get(), outerBorder.get());
+        handleCollisions(cars, innerBorder.get(), outerBorder.get());
 
-        render(window, {userControlledCar, aiControlledCar}, carShapes, coordTransform, innerBorder.get(), outerBorder.get());
+        render(window, cars, carShapes, coordTransform, innerBorder.get(), outerBorder.get());
         
         if(synchronizer->isStepMode()) {
             for (const auto &outputHandler : outputHandlers) {

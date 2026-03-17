@@ -4,19 +4,19 @@
 #include "../ipc/shared_memory.h"
 
 class CarSynchronizer {
-    bool isStepMode;
+    bool stepMode;
     SharedGameMemory& sgm;
 
     public:
 
-    CarSynchronizer(bool isStepMode, SharedGameMemory& sgm) : isStepMode(isStepMode), sgm(sgm) {}
+    CarSynchronizer(bool stepMode, SharedGameMemory& sgm) : stepMode(stepMode), sgm(sgm) {}
 
     bool isStepMode() {
-        return isStepMode;
+        return stepMode;
     }
 
     bool isActionReady() {
-        if(!isStepMode) {
+        if(!isStepMode()) {
             return true; 
         }
 
@@ -29,7 +29,7 @@ class CarSynchronizer {
     }
 
     void setActionReady(bool val) {
-        if(!isStepMode) {
+        if(!isStepMode()) {
             return; 
         }
 
@@ -42,7 +42,7 @@ class CarSynchronizer {
     }
 
     bool isResetFlagSet() {
-        if(!isStepMode) {
+        if(!isStepMode()) {
             return false; 
         }
 
@@ -55,7 +55,7 @@ class CarSynchronizer {
     }
 
     void setResetFlag(bool val) {
-        if(!isStepMode) {
+        if(!isStepMode()) {
             return; 
         }
 
