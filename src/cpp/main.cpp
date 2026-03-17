@@ -252,7 +252,7 @@ int main()
         
         if(synchronizer->isStepMode()) {
             for (const auto &outputHandler : outputHandlers) {
-                outputHandler->exportCarState(aiControlledCar);
+                outputHandler->exportCarState(*aiControlledCar);
             }
         }
     }
