@@ -226,8 +226,14 @@ int main()
         }
 
         if(synchronizer->isStepMode()) {
+            for (const auto &outputHandler : outputHandlers) {
+                outputHandler->exportCarState(*cars[1]);
+            }
+
             while(!synchronizer->isActionReady()){
-                std::cout<<"Waiting for action ready"<<std::endl;
+                for(int i=0; i<10; i++){
+                    std::cout<<"Waiting for action ready"<<std::endl;
+                }
             }
             synchronizer->setActionReady(false);
 
@@ -246,12 +252,6 @@ int main()
         handleCollisions(cars, innerBorder.get(), outerBorder.get());
 
         render(window, cars, carShapes, coordTransform, innerBorder.get(), outerBorder.get());
-        
-        if(synchronizer->isStepMode()) {
-            for (const auto &outputHandler : outputHandlers) {
-                outputHandler->exportCarState(*cars[1]);
-            }
-        }
     }
 
     return 0;
