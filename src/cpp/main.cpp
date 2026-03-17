@@ -227,7 +227,7 @@ int main()
 
         if(synchronizer->isStepMode()) {
             while(!synchronizer->isActionReady()){
-                // spin or sleep
+                std::cout<<"Waiting for action ready"<<std::endl;
             }
             synchronizer->setActionReady(false);
 
