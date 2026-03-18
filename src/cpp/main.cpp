@@ -14,13 +14,13 @@
 #include "./engine/vector.h"
 #include "./engine/coordinates.h"
 #include "./engine/collision/collision.h"
-#include "./entity/curve/circular_curve.h"
 #include "./interaction/car/input/keyboard_car_input_handler.h"
 #include "./interaction/car/input/shm_car_input_handler.h"
 #include "./interaction/car/export/console_car_state_exporter.h"
 #include "./interaction/car/export/shm_car_state_exporter.h"
 #include "./interaction/ipc/shared_memory.h"
 #include "./interaction/car/synchronizer.h"
+#include "./entity/curve/rounded_rectangle_curve.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -90,7 +90,7 @@ void drawDirectionArrow(sf::RenderWindow &window,
 }
 
 void drawCurve(sf::RenderWindow &window,
-               CircularCurve *curve,
+               ParametricCurve2D *curve,
                CoordinateTransform &coordTransform)
 {
     std::vector<Curve2DPoint> points = curve->getCachedPoints();
@@ -117,8 +117,8 @@ void drawCurve(sf::RenderWindow &window,
 }
 
 void handleCollisions(const std::vector<std::unique_ptr<Car>> &cars,
-                      CircularCurve *innerBorder,
-                      CircularCurve *outerBorder)
+                      ParametricCurve2D *innerBorder,
+                      ParametricCurve2D *outerBorder)
 {
     size_t numCars = cars.size();
 
@@ -154,8 +154,8 @@ void render(sf::RenderWindow &window,
             const std::vector<std::unique_ptr<Car>> &cars,
             std::vector<sf::RectangleShape> &carShapes,
             CoordinateTransform &coordTransform,
-            CircularCurve *innerBorder,
-            CircularCurve *outerBorder)
+            ParametricCurve2D *innerBorder,
+            ParametricCurve2D *outerBorder)
 {
     window.clear(sf::Color::Black);
 
@@ -208,8 +208,8 @@ int main()
 
     CoordinateTransform coordTransform(1000, 600);
 
-    auto innerBorder = std::make_unique<CircularCurve>(20, 0, 0);
-    auto outerBorder = std::make_unique<CircularCurve>(28, 0, 0);
+    auto innerBorder = std::make_unique<RoundedRectangleCurve>(20, 40);
+    auto outerBorder = std::make_unique<RoundedRectangleCurve>(28, 40);
 
     innerBorder->generate(0, 360, 100);
     outerBorder->generate(0, 360, 100);
