@@ -247,8 +247,11 @@ int main()
 
         inputHandler1->apply(*cars[0]);
 
-        if(synchronizer->isActionReady()){
+        if(synchronizer->isRlMode() && synchronizer->isActionReady()) {
+            inputHandler2->apply(*cars[1]);
             synchronizer->setActionReady(false);
+        }
+        else if(!synchronizer->isRlMode()) {
             inputHandler2->apply(*cars[1]);
         }
 
