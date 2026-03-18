@@ -4,19 +4,25 @@
 #include "../ipc/shared_memory.h"
 
 class CarSynchronizer {
+    bool rlMode;
     bool stepMode;
     SharedGameMemory& sgm;
 
     public:
 
-    CarSynchronizer(bool stepMode, SharedGameMemory& sgm) : stepMode(stepMode), sgm(sgm) {}
+    CarSynchronizer(bool rlMode, bool stepMode, SharedGameMemory& sgm) : rlMode(rlMode), stepMode(stepMode), sgm(sgm) {}
 
     bool isStepMode() {
         return stepMode;
     }
 
+    bool isRlMode() {
+        return rlMode;
+    }
+
     bool isActionReady() {
-        if(!isStepMode()) {
+        if(!isRlMode()) {
+            // in non-rl mode, action is always ready, as it is controlled by the user
             return true; 
         }
 
@@ -29,7 +35,8 @@ class CarSynchronizer {
     }
 
     void setActionReady(bool val) {
-        if(!isStepMode()) {
+        if(!isRlMode()) {
+            // in non-rl mode, action is always ready, as it is controlled by the user
             return; 
         }
 
@@ -42,7 +49,8 @@ class CarSynchronizer {
     }
 
     bool isResetFlagSet() {
-        if(!isStepMode()) {
+        if(!isRlMode()) {
+            // in non-rl mode, reset flag is always unset, as it is controlled by the user
             return false; 
         }
 
@@ -55,7 +63,8 @@ class CarSynchronizer {
     }
 
     void setResetFlag(bool val) {
-        if(!isStepMode()) {
+        if(!isRlMode()) {
+            // in non-rl mode, reset flag is always unset, as it is controlled by the user
             return; 
         }
 
