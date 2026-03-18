@@ -198,7 +198,15 @@ int main()
     SharedGameMemory shm;
 
     auto inputHandler1 = std::make_unique<KeyboardCarInputHandler>();
-    auto inputHandler2 = std::make_unique<SHMCarInputHandler>(shm);
+
+    CarKeyBindings keyBindings = {
+        sf::Keyboard::Key::A,
+        sf::Keyboard::Key::D,
+        sf::Keyboard::Key::W,
+        sf::Keyboard::Key::S,
+    };
+    auto inputHandler2 = std::make_unique<KeyboardCarInputHandler>(keyBindings);
+    // auto inputHandler2 = std::make_unique<SHMCarInputHandler>(shm);
 
     std::vector<std::unique_ptr<CarStateExporter>> outputHandlers;
     outputHandlers.push_back(std::make_unique<ConsoleCarStateExporter>());
