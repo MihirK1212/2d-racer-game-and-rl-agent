@@ -31,9 +31,9 @@ class RaceManager {
     int countdownStep = 0;
     int winnerCarIndex = -1;
 
-    std::vector<CarStartConfig> startConfigs;
     TrackProgress& trackProgress;
     std::vector<Car*> cars;
+    std::vector<CarStartConfig> startConfigs;
 
 public:
     RaceManager(TrackProgress& trackProgress,

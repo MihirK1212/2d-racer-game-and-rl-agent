@@ -244,7 +244,7 @@ int main()
     // auto inputHandler2 = std::make_unique<SHMCarInputHandler>(shm);
 
     std::vector<std::unique_ptr<CarStateExporter>> outputHandlers;
-    outputHandlers.push_back(std::make_unique<ConsoleCarStateExporter>());
+    // outputHandlers.push_back(std::make_unique<ConsoleCarStateExporter>());
     outputHandlers.push_back(std::make_unique<SHMCarStateExporter>(shm));
 
     auto synchronizer = std::make_unique<CarSynchronizer>(false, false, shm);
