@@ -7,17 +7,20 @@
 #include <string>
 #include <iostream>
 #include <memory>
+#include <thread>
+#include <chrono>
 
 #include "./entity/car/car.h"
 #include "./engine/vector.h"
 #include "./engine/coordinates.h"
 #include "./engine/collision/collision.h"
-#include "./entity/curve/circular_curve.h"
 #include "./interaction/car/input/keyboard_car_input_handler.h"
 #include "./interaction/car/input/shm_car_input_handler.h"
 #include "./interaction/car/export/console_car_state_exporter.h"
 #include "./interaction/car/export/shm_car_state_exporter.h"
 #include "./interaction/ipc/shared_memory.h"
+#include "./interaction/car/synchronizer.h"
+#include "./entity/curve/rounded_rectangle_curve.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -48,24 +51,6 @@ sf::RectangleShape createCarShape(const Car &car, CoordinateTransform &coordTran
     return shape;
 }
 
-void processEvents(sf::RenderWindow &window, const Car &externallyControlledCar,
-                   const std::vector<std::unique_ptr<CarStateExporter>> &outputHandlers)
-{
-    while (const std::optional event = window.pollEvent())
-    {
-        if (event->is<sf::Event::Closed>())
-            window.close();
-
-        if (const auto *keyPressed = event->getIf<sf::Event::KeyPressed>())
-        {
-            if (keyPressed->code == sf::Keyboard::Key::Num9) {
-                for (const auto &outputHandler : outputHandlers) {
-                    outputHandler->exportCarState(externallyControlledCar);
-                }
-            }
-        }
-    }
-}
 
 void updateGame(Car &car)
 {
@@ -105,7 +90,7 @@ void drawDirectionArrow(sf::RenderWindow &window,
 }
 
 void drawCurve(sf::RenderWindow &window,
-               CircularCurve *curve,
+               ParametricCurve2D *curve,
                CoordinateTransform &coordTransform)
 {
     std::vector<Curve2DPoint> points = curve->getCachedPoints();
@@ -132,8 +117,8 @@ void drawCurve(sf::RenderWindow &window,
 }
 
 void handleCollisions(const std::vector<std::unique_ptr<Car>> &cars,
-                      CircularCurve *innerBorder,
-                      CircularCurve *outerBorder)
+                      ParametricCurve2D *innerBorder,
+                      ParametricCurve2D *outerBorder)
 {
     size_t numCars = cars.size();
 
@@ -169,8 +154,8 @@ void render(sf::RenderWindow &window,
             const std::vector<std::unique_ptr<Car>> &cars,
             std::vector<sf::RectangleShape> &carShapes,
             CoordinateTransform &coordTransform,
-            CircularCurve *innerBorder,
-            CircularCurve *outerBorder)
+            ParametricCurve2D *innerBorder,
+            ParametricCurve2D *outerBorder)
 {
     window.clear(sf::Color::Black);
 
@@ -206,19 +191,9 @@ int main()
 {
     sf::RenderWindow window = createWindow();
 
-    CoordinateTransform coordTransform(1000, 600);
-
     std::vector<std::unique_ptr<Car>> cars;
     cars.push_back(std::make_unique<Car>(22.5, 0, 0.7, 1.5));
     cars.push_back(std::make_unique<Car>(25.5, 0, 0.7, 1.5));
-
-    auto innerBorder = std::make_unique<CircularCurve>(20, 0, 0);
-    auto outerBorder = std::make_unique<CircularCurve>(28, 0, 0);
-
-    innerBorder->generate(0, 360, 100);
-    outerBorder->generate(0, 360, 100);
-
-    std::vector<sf::RectangleShape> carShapes;
 
     SharedGameMemory shm;
 
@@ -228,16 +203,54 @@ int main()
     std::vector<std::unique_ptr<CarStateExporter>> outputHandlers;
     outputHandlers.push_back(std::make_unique<ConsoleCarStateExporter>());
     outputHandlers.push_back(std::make_unique<SHMCarStateExporter>(shm));
-    
+
+    auto synchronizer = std::make_unique<CarSynchronizer>(true, false, shm);
+
+    CoordinateTransform coordTransform(1000, 600);
+
+    auto innerBorder = std::make_unique<RoundedRectangleCurve>(20, 40);
+    auto outerBorder = std::make_unique<RoundedRectangleCurve>(28, 40);
+
+    innerBorder->generate(0, 360, 100);
+    outerBorder->generate(0, 360, 100);
+
+    std::vector<sf::RectangleShape> carShapes;
+
     for (const auto &car : cars)
         carShapes.push_back(createCarShape(*car, coordTransform));
 
     while (window.isOpen())
     {
-        processEvents(window, *cars[1], outputHandlers);
+        while (const std::optional event = window.pollEvent())
+        {
+            if (event->is<sf::Event::Closed>())
+                window.close();
+        }
+
+        for (const auto &outputHandler : outputHandlers) {
+            outputHandler->exportCarState(*cars[1]);
+        }
+
+        if(synchronizer->isStepMode()) {
+            while(!synchronizer->isActionReady()){
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            }
+        }
 
         inputHandler1->apply(*cars[0]);
-        inputHandler2->apply(*cars[1]);
+
+        if(synchronizer->isRlMode() && synchronizer->isActionReady()) {
+            inputHandler2->apply(*cars[1]);
+            synchronizer->setActionReady(false);
+        }
+        else if(!synchronizer->isRlMode()) {
+            inputHandler2->apply(*cars[1]);
+        }
+
+        if(synchronizer->isStepMode() && synchronizer->isResetFlagSet()){
+            // TODO: implement reset episode
+            synchronizer->setResetFlag(false);
+        }
 
         updateGame(*cars[0]);
         updateGame(*cars[1]);

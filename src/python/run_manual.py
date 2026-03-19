@@ -54,7 +54,6 @@ listener.start()
 def is_key_pressed(key):
     return keys_pressed.get(key, False)
 
-
 def main():
     try:
         shm = shared_memory.SharedMemory(name=SHM_NAME)
@@ -75,16 +74,19 @@ def main():
             down  = int(is_key_pressed("s"))
             left  = int(is_key_pressed("a"))
             right = int(is_key_pressed("d"))
-
+            
             # Write inputs (bytes 0-3)
             buffer[0:4] = struct.pack("4B", up, down, left, right)
 
-            # Check state_ready flag
-            state_ready = struct.unpack("B", buffer[4:5])[0]
+            # Set action_ready flag to 1
+            buffer[4:5] = struct.pack("B", 1)
+
+            # Get state_ready flag
+            state_ready = struct.unpack("B", buffer[5:6])[0]
 
             if state_ready:
                 pos_x, pos_y, speed, dir_x, dir_y, tangential_accel = struct.unpack(
-                    "6d", buffer[8:56]
+                    "6d", buffer[11:59]
                 )
 
                 print("─── Car State ───")
@@ -94,8 +96,8 @@ def main():
                 print(f"Acceleration:  {tangential_accel:.3f}")
                 print()
 
-                # reset flag
-                buffer[4:5] = struct.pack("B", 0)
+                # Set state_ready flag to 0
+                buffer[5:6] = struct.pack("B", 0)
 
             time.sleep(1/60)
 

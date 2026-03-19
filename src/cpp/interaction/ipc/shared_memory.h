@@ -20,7 +20,10 @@ struct SharedGameData {
     uint8_t input_right;
 
     // C++ -> Python (state flag + car state)
-    uint8_t state_ready;
+    uint8_t action_ready; // Python sets to 1 after writing action
+    uint8_t state_ready; // C++ sets to 1 after writing state
+    uint8_t reset_flag; // Python sets to 1 to request episode reset
+    uint8_t done_flag; // C++ sets to 1 when episode ends
     uint8_t _pad[3];
 
     double pos_x;
@@ -32,7 +35,7 @@ struct SharedGameData {
 };
 #pragma pack(pop)
 
-static_assert(sizeof(SharedGameData) == 56, "SharedGameData must be exactly 56 bytes");
+static_assert(sizeof(SharedGameData) == 59, "SharedGameData must be exactly 56 bytes");
 
 constexpr const char* SHM_NAME = "/RacerGameSHM";
 constexpr size_t SHM_SIZE = sizeof(SharedGameData);
