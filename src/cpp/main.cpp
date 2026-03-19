@@ -21,6 +21,9 @@
 #include "./interaction/ipc/shared_memory.h"
 #include "./interaction/car/synchronizer.h"
 #include "./entity/curve/rounded_rectangle_curve.h"
+#include "./race/track_progress.h"
+#include "./race/race_manager.h"
+#include "./race/hud.h"
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -38,12 +41,12 @@ sf::RenderWindow createWindow()
     return window;
 }
 
-sf::RectangleShape createCarShape(const Car &car, CoordinateTransform &coordTransform)
+sf::RectangleShape createCarShape(const Car &car, CoordinateTransform &coordTransform, sf::Color color)
 {
     sf::RectangleShape shape({static_cast<float>(coordTransform.metersToPixels(car.getWidth())),
                               static_cast<float>(coordTransform.metersToPixels(car.getHeight()))});
 
-    shape.setFillColor(sf::Color::Red);
+    shape.setFillColor(color);
 
     shape.setOrigin({static_cast<float>(coordTransform.metersToPixels(car.getWidth()) / 2.0),
                      static_cast<float>(coordTransform.metersToPixels(car.getHeight()) / 2.0)});
@@ -150,6 +153,25 @@ void handleCollisions(const std::vector<std::unique_ptr<Car>> &cars,
     }
 }
 
+void drawStartFinishLine(sf::RenderWindow &window,
+                         ParametricCurve2D *innerBorder,
+                         ParametricCurve2D *outerBorder,
+                         CoordinateTransform &coordTransform)
+{
+    Vector2D innerPt = innerBorder->getCachedPoints().front().position;
+    Vector2D outerPt = outerBorder->getCachedPoints().front().position;
+
+    Vector2D screenInner = coordTransform.gameToScreenPoint(innerPt);
+    Vector2D screenOuter = coordTransform.gameToScreenPoint(outerPt);
+
+    sf::VertexArray line(sf::PrimitiveType::Lines, 2);
+    line[0] = sf::Vertex{{static_cast<float>(screenInner.x), static_cast<float>(screenInner.y)},
+                          sf::Color(255, 255, 0)};
+    line[1] = sf::Vertex{{static_cast<float>(screenOuter.x), static_cast<float>(screenOuter.y)},
+                          sf::Color(255, 255, 0)};
+    window.draw(line);
+}
+
 void render(sf::RenderWindow &window,
             const std::vector<std::unique_ptr<Car>> &cars,
             std::vector<sf::RectangleShape> &carShapes,
@@ -158,6 +180,8 @@ void render(sf::RenderWindow &window,
             ParametricCurve2D *outerBorder)
 {
     window.clear(sf::Color::Black);
+
+    drawStartFinishLine(window, innerBorder, outerBorder, coordTransform);
 
     for (size_t i = 0; i < cars.size(); i++)
     {
@@ -183,41 +207,74 @@ void render(sf::RenderWindow &window,
 
     drawCurve(window, innerBorder, coordTransform);
     drawCurve(window, outerBorder, coordTransform);
-
-    window.display();
 }
 
 int main()
 {
+    constexpr unsigned int SCREEN_WIDTH = 1000;
+    constexpr unsigned int SCREEN_HEIGHT = 600;
+
+    constexpr float INNER_RADIUS = 20.0f;
+    constexpr float OUTER_RADIUS = 28.0f;
+    constexpr float STRAIGHT_LENGTH = 40.0f;
+    constexpr float CENTERLINE_RADIUS = (INNER_RADIUS + OUTER_RADIUS) / 2.0f;
+
     sf::RenderWindow window = createWindow();
 
+    // Cars start on the track at theta=0 (rightmost point), facing up (+y = counterclockwise)
+    Vector2D startPos0(STRAIGHT_LENGTH / 2.0 + INNER_RADIUS + 2.0, -0.5);
+    Vector2D startPos1(STRAIGHT_LENGTH / 2.0 + OUTER_RADIUS - 2.0, -0.5);
+    Vector2D startDir(0, 1);
+
     std::vector<std::unique_ptr<Car>> cars;
-    cars.push_back(std::make_unique<Car>(22.5, 0, 0.7, 1.5));
-    cars.push_back(std::make_unique<Car>(25.5, 0, 0.7, 1.5));
+    cars.push_back(std::make_unique<Car>(startPos0.x, startPos0.y, 0.7, 1.5));
+    cars.push_back(std::make_unique<Car>(startPos1.x, startPos1.y, 0.7, 1.5));
 
     SharedGameMemory shm;
 
     auto inputHandler1 = std::make_unique<KeyboardCarInputHandler>();
-    auto inputHandler2 = std::make_unique<SHMCarInputHandler>(shm);
+
+    CarKeyBindings keyBindings = {
+        sf::Keyboard::Key::A,
+        sf::Keyboard::Key::D,
+        sf::Keyboard::Key::W,
+        sf::Keyboard::Key::S,
+    };
+    auto inputHandler2 = std::make_unique<KeyboardCarInputHandler>(keyBindings);
+    // auto inputHandler2 = std::make_unique<SHMCarInputHandler>(shm);
 
     std::vector<std::unique_ptr<CarStateExporter>> outputHandlers;
     outputHandlers.push_back(std::make_unique<ConsoleCarStateExporter>());
     outputHandlers.push_back(std::make_unique<SHMCarStateExporter>(shm));
 
-    auto synchronizer = std::make_unique<CarSynchronizer>(true, false, shm);
+    auto synchronizer = std::make_unique<CarSynchronizer>(false, false, shm);
 
-    CoordinateTransform coordTransform(1000, 600);
+    CoordinateTransform coordTransform(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-    auto innerBorder = std::make_unique<RoundedRectangleCurve>(20, 40);
-    auto outerBorder = std::make_unique<RoundedRectangleCurve>(28, 40);
+    auto innerBorder = std::make_unique<RoundedRectangleCurve>(INNER_RADIUS, STRAIGHT_LENGTH);
+    auto outerBorder = std::make_unique<RoundedRectangleCurve>(OUTER_RADIUS, STRAIGHT_LENGTH);
 
-    innerBorder->generate(0, 360, 100);
-    outerBorder->generate(0, 360, 100);
+    innerBorder->generate(0, 360, 200);
+    outerBorder->generate(0, 360, 200);
+
+    // Race systems
+    TrackProgress trackProgress(CENTERLINE_RADIUS, STRAIGHT_LENGTH, 2);
+    trackProgress.initializeCar(0, startPos0);
+    trackProgress.initializeCar(1, startPos1);
+
+    std::vector<CarStartConfig> startConfigs = {
+        {startPos0, startDir},
+        {startPos1, startDir}
+    };
+    std::vector<Car*> carPtrs = {cars[0].get(), cars[1].get()};
+
+    RaceManager raceManager(trackProgress, carPtrs, startConfigs);
+
+    HUD hud("arial.ttf", SCREEN_WIDTH, SCREEN_HEIGHT);
 
     std::vector<sf::RectangleShape> carShapes;
-
-    for (const auto &car : cars)
-        carShapes.push_back(createCarShape(*car, coordTransform));
+    carShapes.push_back(createCarShape(*cars[0], coordTransform, sf::Color::Red));
+    carShapes.push_back(createCarShape(*cars[1], coordTransform, sf::Color(80, 140, 255)));
 
     while (window.isOpen())
     {
@@ -225,6 +282,11 @@ int main()
         {
             if (event->is<sf::Event::Closed>())
                 window.close();
+
+            if (const auto* keyEvt = event->getIf<sf::Event::KeyPressed>()) {
+                if (keyEvt->code == sf::Keyboard::Key::Space)
+                    raceManager.onSpacePressed();
+            }
         }
 
         for (const auto &outputHandler : outputHandlers) {
@@ -237,27 +299,35 @@ int main()
             }
         }
 
-        inputHandler1->apply(*cars[0]);
+        if (raceManager.shouldAcceptInput()) {
+            inputHandler1->apply(*cars[0]);
 
-        if(synchronizer->isRlMode() && synchronizer->isActionReady()) {
-            inputHandler2->apply(*cars[1]);
-            synchronizer->setActionReady(false);
-        }
-        else if(!synchronizer->isRlMode()) {
-            inputHandler2->apply(*cars[1]);
+            if(synchronizer->isRlMode() && synchronizer->isActionReady()) {
+                inputHandler2->apply(*cars[1]);
+                synchronizer->setActionReady(false);
+            }
+            else if(!synchronizer->isRlMode()) {
+                inputHandler2->apply(*cars[1]);
+            }
         }
 
         if(synchronizer->isStepMode() && synchronizer->isResetFlagSet()){
-            // TODO: implement reset episode
+            raceManager.resetRace();
             synchronizer->setResetFlag(false);
         }
 
-        updateGame(*cars[0]);
-        updateGame(*cars[1]);
+        if (raceManager.shouldAcceptInput()) {
+            updateGame(*cars[0]);
+            updateGame(*cars[1]);
 
-        handleCollisions(cars, innerBorder.get(), outerBorder.get());
+            handleCollisions(cars, innerBorder.get(), outerBorder.get());
+        }
+
+        raceManager.update();
 
         render(window, cars, carShapes, coordTransform, innerBorder.get(), outerBorder.get());
+        hud.draw(window, raceManager, trackProgress, 2);
+        window.display();
     }
 
     return 0;

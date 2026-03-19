@@ -71,6 +71,8 @@ class Car {
     void rotateAntiClockwise(double angleDegrees); // rotate the car anti-clockwise by the given angle (in degrees)
     void rotateClockwise(double angleDegrees); // rotate the car clockwise by the given angle (in degrees)
 
+    void reset(Vector2D pos, Vector2D dir);
+
     void printCarState() const;
 };
 
