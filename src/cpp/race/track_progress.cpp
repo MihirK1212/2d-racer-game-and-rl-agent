@@ -60,14 +60,14 @@ void TrackProgress::initializeCar(int carIndex, const Vector2D& position) {
     cp.goingWrongWay = false;
     cp.totalProgress = 0.0;
 
+    std::cout << "for car " << carIndex << ", initialization theta: " << theta << std::endl;
+
     // Advance nextCheckpoint past the starting theta so checkpoint 0 (start line)
     // is the LAST checkpoint to cross for lap completion
     for (int i = 0; i < NUM_CHECKPOINTS; ++i) {
-        // TODO: remove this temp logic
-        cp.nextCheckpoint = 1;
-        // if (checkpointThetas[i] <= theta) {
-        //     cp.nextCheckpoint = (i + 1) % NUM_CHECKPOINTS;
-        // }
+        if (checkpointThetas[i] <= theta) {
+            cp.nextCheckpoint = (i + 1) % NUM_CHECKPOINTS;
+        }
     }
 
     initialized = true;
