@@ -44,6 +44,7 @@ public:
     void update();
 
     void resetRace();
+    void respawnCar(int carIndex);
 
     RaceState getState() const;
     int getCountdownNumber() const;

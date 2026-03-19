@@ -17,6 +17,11 @@ struct CarProgress {
     bool firstUpdateDone = false;
 };
 
+struct RespawnInfo {
+    Vector2D position;
+    Vector2D direction;
+};
+
 class TrackProgress {
     static constexpr int NUM_CHECKPOINTS = 8;
     static constexpr double CHECKPOINT_INTERVAL = 360.0 / NUM_CHECKPOINTS;
@@ -38,6 +43,9 @@ public:
     void initializeCar(int carIndex, const Vector2D& position);
     void update(int carIndex, const Vector2D& position);
     void reset(int carIndex, const Vector2D& position);
+
+    RespawnInfo getRespawnInfo(int carIndex) const;
+    void respawnCar(int carIndex);
 
     const CarProgress& getCarProgress(int carIndex) const;
     int getRanking(int carIndexA, int carIndexB) const;

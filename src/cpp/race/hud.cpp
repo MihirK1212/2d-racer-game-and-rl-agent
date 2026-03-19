@@ -51,9 +51,10 @@ void HUD::draw(sf::RenderWindow& window,
             drawText(window, posStr, 24, color, xBase, yBase + 48.0f);
 
             if (cp.goingWrongWay && state == RaceState::RACING) {
-                drawText(window, "WRONG WAY!", 48,
-                         sf::Color(255, 50, 50), 0,
-                         static_cast<float>(screenHeight) / 2.0f - 60.0f, true);
+                float wrongWayY = (i == 0)
+                    ? static_cast<float>(screenHeight) / 2.0f - 60.0f
+                    : static_cast<float>(screenHeight) / 2.0f - 20.0f;
+                drawText(window, "WRONG WAY!", 28, color, 0, wrongWayY, true);
             }
         }
     }

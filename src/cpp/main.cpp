@@ -286,6 +286,8 @@ int main()
             if (const auto* keyEvt = event->getIf<sf::Event::KeyPressed>()) {
                 if (keyEvt->code == sf::Keyboard::Key::Space)
                     raceManager.onSpacePressed();
+                if (keyEvt->code == sf::Keyboard::Key::R)
+                    raceManager.respawnCar(0);
             }
         }
 

@@ -33,13 +33,18 @@ void RaceManager::update() {
             trackProgress.update(static_cast<int>(i), cars[i]->getPosition());
         }
 
+        int bestFinisher = -1;
+        double bestProgress = -1.0;
         for (size_t i = 0; i < cars.size(); ++i) {
             const CarProgress& cp = trackProgress.getCarProgress(static_cast<int>(i));
-            if (cp.lapsCompleted >= TOTAL_LAPS) {
-                state = RaceState::FINISHED;
-                winnerCarIndex = static_cast<int>(i);
-                break;
+            if (cp.lapsCompleted >= TOTAL_LAPS && cp.totalProgress > bestProgress) {
+                bestProgress = cp.totalProgress;
+                bestFinisher = static_cast<int>(i);
             }
+        }
+        if (bestFinisher >= 0) {
+            state = RaceState::FINISHED;
+            winnerCarIndex = bestFinisher;
         }
     }
 }
@@ -53,6 +58,14 @@ void RaceManager::resetRace() {
         cars[i]->reset(startConfigs[i].position, startConfigs[i].direction);
         trackProgress.reset(static_cast<int>(i), startConfigs[i].position);
     }
+}
+
+void RaceManager::respawnCar(int carIndex) {
+    if (state != RaceState::RACING) return;
+
+    RespawnInfo info = trackProgress.getRespawnInfo(carIndex);
+    cars[carIndex]->reset(info.position, info.direction);
+    trackProgress.respawnCar(carIndex);
 }
 
 RaceState RaceManager::getState() const {
@@ -75,7 +88,16 @@ int RaceManager::getTotalLaps() const {
 }
 
 int RaceManager::getLeaderIndex() const {
-    return trackProgress.getRanking(0, 1);
+    int leader = 0;
+    double best = trackProgress.getCarProgress(0).totalProgress;
+    for (size_t i = 1; i < cars.size(); ++i) {
+        double p = trackProgress.getCarProgress(static_cast<int>(i)).totalProgress;
+        if (p > best) {
+            best = p;
+            leader = static_cast<int>(i);
+        }
+    }
+    return leader;
 }
 
 bool RaceManager::shouldAcceptInput() const {

@@ -30,27 +30,24 @@ double TrackProgress::computeDelta(double current, double previous) const {
 }
 
 void TrackProgress::updateCheckpoints(int carIndex, double delta) {
-    // Only process if the car is moving forward around the track
     if (delta <= 0.0) return;
 
     CarProgress& cp = carsProgress[carIndex];
     double prev = cp.previousTheta;
     double curr = cp.currentTheta;
 
-    // Theta value for the next checkpoint that the car needs to cross
-    double nextCpTheta = checkpointThetas[cp.nextCheckpoint];
+    // if car crosses multiple checkpoints in a single frame, we need to update the next checkpoint
+    for (int guard = 0; guard < NUM_CHECKPOINTS; ++guard) {
+        double nextCpTheta = checkpointThetas[cp.nextCheckpoint];
 
-    bool crossed = false;
-    // If not wrapping around 0/360 (no crossing the "0" line, simple case)
-    if (prev <= curr) {
-        crossed = (prev < nextCpTheta && nextCpTheta <= curr);
-    } else {
-        // If wrapping around 0/360 (crossed the start/finish line), checkpoint may be behind "0"
-        crossed = (prev < nextCpTheta || nextCpTheta <= curr);
-    }
+        bool crossed = false;
+        if (prev <= curr) {
+            crossed = (prev < nextCpTheta && nextCpTheta <= curr);
+        } else {
+            crossed = (prev < nextCpTheta || nextCpTheta <= curr);
+        }
 
-    // If the next checkpoint was crossed during the update, advance to the following one.
-    if (crossed) {
+        if (!crossed) break;
         cp.nextCheckpoint = (cp.nextCheckpoint + 1) % NUM_CHECKPOINTS;
     }
 }
@@ -74,8 +71,6 @@ void TrackProgress::initializeCar(int carIndex, const Vector2D& position) {
     cp.goingWrongWay = false;
     cp.totalProgress = 0.0;
     cp.firstUpdateDone = false;
-
-    std::cout << "for car " << carIndex << ", initialization theta: " << theta << std::endl;
 
     // Advance nextCheckpoint past the starting theta so checkpoint 0 (start line)
     // is the LAST checkpoint to cross for lap completion
@@ -120,6 +115,29 @@ void TrackProgress::update(int carIndex, const Vector2D& position) {
 
 void TrackProgress::reset(int carIndex, const Vector2D& position) {
     initializeCar(carIndex, position);
+}
+
+RespawnInfo TrackProgress::getRespawnInfo(int carIndex) const {
+    const CarProgress& cp = carsProgress[carIndex];
+    int lastCheckpoint = (cp.nextCheckpoint - 1 + NUM_CHECKPOINTS) % NUM_CHECKPOINTS;
+    double theta = checkpointThetas[lastCheckpoint];
+
+    Curve2DPoint point = centerline->getPointForTheta(theta);
+    Vector2D direction = centerline->tangentAt(theta);
+
+    return {point.position, direction};
+}
+
+void TrackProgress::respawnCar(int carIndex) {
+    CarProgress& cp = carsProgress[carIndex];
+    int lastCheckpoint = (cp.nextCheckpoint - 1 + NUM_CHECKPOINTS) % NUM_CHECKPOINTS;
+    double theta = checkpointThetas[lastCheckpoint];
+
+    cp.currentTheta = theta;
+    cp.previousTheta = theta;
+    cp.goingWrongWay = false;
+    cp.totalProgress = cp.lapsCompleted * 360.0 + theta;
+    cp.firstUpdateDone = false;
 }
 
 const CarProgress& TrackProgress::getCarProgress(int carIndex) const {
