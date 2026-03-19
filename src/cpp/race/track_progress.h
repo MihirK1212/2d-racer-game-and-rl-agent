@@ -14,12 +14,14 @@ struct CarProgress {
     int nextCheckpoint = 0;
     bool goingWrongWay = false;
     double totalProgress = 0.0;
+    bool firstUpdateDone = false;
 };
 
 class TrackProgress {
     static constexpr int NUM_CHECKPOINTS = 8;
     static constexpr double CHECKPOINT_INTERVAL = 360.0 / NUM_CHECKPOINTS;
     static constexpr double WRONG_WAY_THRESHOLD = -0.5;
+    static constexpr double START_LINE_SNAP_TOLERANCE = 1.0;
 
     std::unique_ptr<RoundedRectangleCurve> centerline;
     std::vector<double> checkpointThetas;

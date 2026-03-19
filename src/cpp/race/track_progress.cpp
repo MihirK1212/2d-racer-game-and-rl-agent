@@ -7,7 +7,8 @@ TrackProgress::TrackProgress(float centerlineRadius, float straightLength, int n
     : centerline(std::make_unique<RoundedRectangleCurve>(centerlineRadius, straightLength)),
       carsProgress(numCars)
 {
-    centerline->generate(0, 360, 720);
+    static constexpr int NUM_CURVE_POINTS = 720;
+    centerline->generate(0, 360.0 - (360.0 / NUM_CURVE_POINTS), NUM_CURVE_POINTS);
 
     checkpointThetas.reserve(NUM_CHECKPOINTS);
     for (int i = 0; i < NUM_CHECKPOINTS; ++i) {
@@ -29,21 +30,26 @@ double TrackProgress::computeDelta(double current, double previous) const {
 }
 
 void TrackProgress::updateCheckpoints(int carIndex, double delta) {
+    // Only process if the car is moving forward around the track
     if (delta <= 0.0) return;
 
     CarProgress& cp = carsProgress[carIndex];
     double prev = cp.previousTheta;
     double curr = cp.currentTheta;
 
+    // Theta value for the next checkpoint that the car needs to cross
     double nextCpTheta = checkpointThetas[cp.nextCheckpoint];
 
     bool crossed = false;
+    // If not wrapping around 0/360 (no crossing the "0" line, simple case)
     if (prev <= curr) {
         crossed = (prev < nextCpTheta && nextCpTheta <= curr);
     } else {
+        // If wrapping around 0/360 (crossed the start/finish line), checkpoint may be behind "0"
         crossed = (prev < nextCpTheta || nextCpTheta <= curr);
     }
 
+    // If the next checkpoint was crossed during the update, advance to the following one.
     if (crossed) {
         cp.nextCheckpoint = (cp.nextCheckpoint + 1) % NUM_CHECKPOINTS;
     }
@@ -53,6 +59,13 @@ void TrackProgress::initializeCar(int carIndex, const Vector2D& position) {
     ClosestPointResult result = centerline->closestPointTo(position);
     double theta = normalizeTheta(result.theta);
 
+    // Snap near-360 values to 0: a car at the start/finish line can get
+    // theta just below 360 due to closestPointTo landing on the trailing
+    // side of the 0/360 boundary.
+    if (theta > 360.0 - START_LINE_SNAP_TOLERANCE) {
+        theta = 0.0;
+    }
+
     CarProgress& cp = carsProgress[carIndex];
     cp.currentTheta = theta;
     cp.previousTheta = theta;
@@ -60,6 +73,7 @@ void TrackProgress::initializeCar(int carIndex, const Vector2D& position) {
     cp.nextCheckpoint = 0;
     cp.goingWrongWay = false;
     cp.totalProgress = 0.0;
+    cp.firstUpdateDone = false;
 
     std::cout << "for car " << carIndex << ", initialization theta: " << theta << std::endl;
 
@@ -88,12 +102,16 @@ void TrackProgress::update(int carIndex, const Vector2D& position) {
     // Lap completion must be checked BEFORE checkpoint update because
     // checkpoint 0 sits at the start line and would advance nextCheckpoint
     // away from 0 in the same frame, preventing the lap from being counted.
-    if (delta > 0.0 && cp.nextCheckpoint == 0) {
+    // Skip the check on the very first update after init/reset to avoid a
+    // false lap from the initialization theta jumping across the 0/360 seam.
+    if (cp.firstUpdateDone && delta > 0.0 && cp.nextCheckpoint == 0) {
         bool crossedStart = (cp.previousTheta > 300.0 && cp.currentTheta < 60.0);
         if (crossedStart) {
             cp.lapsCompleted++;
         }
     }
+
+    cp.firstUpdateDone = true;
 
     updateCheckpoints(carIndex, delta);
 
