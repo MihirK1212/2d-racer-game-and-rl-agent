@@ -1,6 +1,7 @@
 #include "track_progress.h"
 #include <cmath>
 #include <algorithm>
+#include <iostream>
 
 TrackProgress::TrackProgress(float centerlineRadius, float straightLength, int numCars)
     : centerline(std::make_unique<RoundedRectangleCurve>(centerlineRadius, straightLength)),
