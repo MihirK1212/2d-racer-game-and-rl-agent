@@ -29,6 +29,37 @@ double TrackProgress::computeDelta(double current, double previous) const {
     return delta;
 }
 
+double TrackProgress::forwardThetaDistance(double fromTheta, double toTheta) const {
+    return normalizeTheta(toTheta - fromTheta);
+}
+
+int TrackProgress::getCompletedCheckpointsThisLap(const CarProgress& cp) const {
+    return (cp.nextCheckpoint + NUM_CHECKPOINTS - 1) % NUM_CHECKPOINTS;
+}
+
+double TrackProgress::computeValidatedProgress(const CarProgress& cp) const {
+    const int completedCheckpoints = getCompletedCheckpointsThisLap(cp);
+    const int lastCheckpoint = completedCheckpoints;
+
+    const double baseProgress =
+        cp.lapsCompleted * 360.0 + completedCheckpoints * CHECKPOINT_INTERVAL;
+
+    const double lastCheckpointTheta = checkpointThetas[lastCheckpoint];
+    const double nextCheckpointTheta = checkpointThetas[cp.nextCheckpoint];
+    const double segmentSpan = forwardThetaDistance(lastCheckpointTheta, nextCheckpointTheta);
+    const double segmentProgress = forwardThetaDistance(lastCheckpointTheta, cp.currentTheta);
+
+    // Only count intra-segment progress while the car is still between the
+    // last confirmed checkpoint and the next one. If it reverses behind the
+    // last checkpoint, clamp to the checkpoint boundary instead of wrapping
+    // around and incorrectly inflating progress.
+    if (segmentProgress <= segmentSpan) {
+        return baseProgress + segmentProgress;
+    }
+
+    return baseProgress;
+}
+
 void TrackProgress::updateCheckpoints(int carIndex, double delta) {
     if (delta <= 0.0) return;
 
@@ -69,7 +100,6 @@ void TrackProgress::initializeCar(int carIndex, const Vector2D& position) {
     cp.lapsCompleted = 0;
     cp.nextCheckpoint = 0;
     cp.goingWrongWay = false;
-    cp.totalProgress = 0.0;
     cp.firstUpdateDone = false;
 
     // Advance nextCheckpoint past the starting theta so checkpoint 0 (start line)
@@ -79,6 +109,8 @@ void TrackProgress::initializeCar(int carIndex, const Vector2D& position) {
             cp.nextCheckpoint = (i + 1) % NUM_CHECKPOINTS;
         }
     }
+
+    cp.totalProgress = computeValidatedProgress(cp);
 
     initialized = true;
 }
@@ -110,7 +142,7 @@ void TrackProgress::update(int carIndex, const Vector2D& position) {
 
     updateCheckpoints(carIndex, delta);
 
-    cp.totalProgress = cp.lapsCompleted * 360.0 + cp.currentTheta;
+    cp.totalProgress = computeValidatedProgress(cp);
 }
 
 void TrackProgress::reset(int carIndex, const Vector2D& position) {
@@ -136,8 +168,8 @@ void TrackProgress::respawnCar(int carIndex) {
     cp.currentTheta = theta;
     cp.previousTheta = theta;
     cp.goingWrongWay = false;
-    cp.totalProgress = cp.lapsCompleted * 360.0 + theta;
     cp.firstUpdateDone = false;
+    cp.totalProgress = computeValidatedProgress(cp);
 }
 
 const CarProgress& TrackProgress::getCarProgress(int carIndex) const {
