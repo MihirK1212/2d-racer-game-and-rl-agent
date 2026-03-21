@@ -251,7 +251,7 @@ int main()
     constexpr float CENTERLINE_RADIUS = (INNER_RADIUS + OUTER_RADIUS) / 2.0f;
 
     bool externalInputMode = true;
-    bool stepMode = false;
+    bool stepMode = true;
 
     sf::RenderWindow window = createWindow();
 
