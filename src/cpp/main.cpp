@@ -14,13 +14,13 @@
 #include "./engine/vector.h"
 #include "./engine/coordinates.h"
 #include "./engine/collision/collision.h"
-#include "./interaction/car/input/keyboard_car_input_handler.h"
-#include "./interaction/car/input/shm_car_input_handler.h"
-#include "./interaction/car/input/centerline_car_input_handler.h"
-#include "./interaction/car/export/console_car_state_exporter.h"
-#include "./interaction/car/export/shm_car_state_exporter.h"
+#include "./interaction/input/keyboard_car_input_handler.h"
+#include "./interaction/input/shm_car_input_handler.h"
+#include "./interaction/input/centerline_car_input_handler.h"
+#include "./interaction/export/console_car_state_exporter.h"
+#include "./interaction/export/shm_game_state_exporter.h"
 #include "./interaction/ipc/shared_memory.h"
-#include "./interaction/car/synchronizer.h"
+#include "./interaction/synchronizer.h"
 #include "./entity/curve/rounded_rectangle_curve.h"
 #include "./race/track_progress.h"
 #include "./race/race_manager.h"
@@ -241,7 +241,7 @@ int main()
     constexpr float STRAIGHT_LENGTH = 40.0f;
     constexpr float CENTERLINE_RADIUS = (INNER_RADIUS + OUTER_RADIUS) / 2.0f;
 
-    bool externalInputMode = false;
+    bool externalInputMode = true;
     bool stepMode = false;
 
     sf::RenderWindow window = createWindow();
@@ -289,8 +289,7 @@ int main()
         inputHandler2 = std::make_unique<KeyboardCarInputHandler>(keyBindings);
     }
 
-    std::vector<std::unique_ptr<CarStateExporter>> outputHandlers;
-    outputHandlers.push_back(std::make_unique<SHMCarStateExporter>(shm));
+    std::unique_ptr<SHMGameStateExporter> shmGameStateExporter = std::make_unique<SHMGameStateExporter>(shm);
 
     // Race systems
     TrackProgress trackProgress(centerline.get(), 2);
@@ -329,9 +328,7 @@ int main()
             }
         }
 
-        for (const auto &outputHandler : outputHandlers) {
-            outputHandler->exportCarState(*cars[1]);
-        }
+        shmGameStateExporter->exportState(*cars[1]);
 
         if(synchronizer->isStepMode()) {
             while(!synchronizer->isActionReady()){

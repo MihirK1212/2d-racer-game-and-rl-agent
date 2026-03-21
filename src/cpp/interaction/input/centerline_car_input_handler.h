@@ -2,8 +2,8 @@
 #define CENTERLINE_CAR_INPUT_HANDLER_H
 
 #include "./base_car_input_handler.h"
-#include "../../../entity/curve/curve.h"
-#include "../../../engine/vector.h"
+#include "../../entity/curve/curve.h"
+#include "../../engine/vector.h"
 
 class CenterlineCarInputHandler : public CarInputHandler {
     ParametricCurve2D* centerline;

@@ -1,7 +1,7 @@
 #ifndef BASE_CAR_INPUT_HANDLER_H
 #define BASE_CAR_INPUT_HANDLER_H
 
-#include "../../../entity/car/car.h"
+#include "../../entity/car/car.h"
 
 class CarInputHandler {
     public:

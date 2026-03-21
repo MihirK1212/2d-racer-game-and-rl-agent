@@ -1,17 +1,17 @@
-#ifndef SHM_CAR_STATE_EXPORTER_H
-#define SHM_CAR_STATE_EXPORTER_H
+#ifndef SHM_GAME_STATE_EXPORTER_H
+#define SHM_GAME_STATE_EXPORTER_H
 
-#include "./base_car_state_exporter.h"
-#include "../../ipc/shared_memory.h"
+#include "../../entity/car/car.h"
+#include "../ipc/shared_memory.h"
 
-class SHMCarStateExporter: public CarStateExporter {
+class SHMGameStateExporter {
     SharedGameMemory& sgm;
 
     public:
 
-    explicit SHMCarStateExporter(SharedGameMemory& sgm) : sgm(sgm) {}
+    explicit SHMGameStateExporter(SharedGameMemory& sgm) : sgm(sgm) {}
 
-    void exportCarState(const Car& car) override {
+    void exportState(const Car& car) {
         SharedGameData* data = sgm.getData();
 
         if (!data) {

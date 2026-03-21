@@ -2,7 +2,7 @@
 #define SHM_CAR_INPUT_HANDLER_H
 
 #include "./base_car_input_handler.h"
-#include "../../ipc/shared_memory.h"
+#include "../ipc/shared_memory.h"
 
 class SHMCarInputHandler: public CarInputHandler {
     SharedGameMemory& sgm;
