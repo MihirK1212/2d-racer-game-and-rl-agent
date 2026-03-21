@@ -172,6 +172,26 @@ void drawStartFinishLine(sf::RenderWindow &window,
     window.draw(line);
 }
 
+void handleWrongWayDetection(RaceManager& raceManager, TrackProgress& trackProgress, const std::vector<std::unique_ptr<Car>>& cars, std::vector<int>& wrongWayFrameCounts, int WRONG_WAY_RESPAWN_FRAMES) {
+    if (raceManager.shouldAcceptInput()) {
+        for (size_t i = 0; i < cars.size(); ++i) {
+            const CarProgress& cp = trackProgress.getCarProgress(static_cast<int>(i));
+
+            if (cp.goingWrongWay) {
+                wrongWayFrameCounts[i]++;
+                if (wrongWayFrameCounts[i] > WRONG_WAY_RESPAWN_FRAMES) {
+                    raceManager.respawnCar(static_cast<int>(i));
+                    wrongWayFrameCounts[i] = 0;
+                }
+            } else {
+                wrongWayFrameCounts[i] = 0;
+            }
+        }
+    } else {
+        std::fill(wrongWayFrameCounts.begin(), wrongWayFrameCounts.end(), 0);
+    }
+}
+
 void render(sf::RenderWindow &window,
             const std::vector<std::unique_ptr<Car>> &cars,
             std::vector<sf::RectangleShape> &carShapes,
@@ -213,6 +233,7 @@ int main()
 {
     constexpr unsigned int SCREEN_WIDTH = 1000;
     constexpr unsigned int SCREEN_HEIGHT = 600;
+    constexpr int WRONG_WAY_RESPAWN_FRAMES = 10;
 
     constexpr float INNER_RADIUS = 20.0f;
     constexpr float OUTER_RADIUS = 28.0f;
@@ -275,6 +296,7 @@ int main()
     std::vector<sf::RectangleShape> carShapes;
     carShapes.push_back(createCarShape(*cars[0], coordTransform, sf::Color::Red));
     carShapes.push_back(createCarShape(*cars[1], coordTransform, sf::Color(80, 140, 255)));
+    std::vector<int> wrongWayFrameCounts(cars.size(), 0);
 
     while (window.isOpen())
     {
@@ -286,8 +308,10 @@ int main()
             if (const auto* keyEvt = event->getIf<sf::Event::KeyPressed>()) {
                 if (keyEvt->code == sf::Keyboard::Key::Space)
                     raceManager.onSpacePressed();
-                if (keyEvt->code == sf::Keyboard::Key::R)
+                if (keyEvt->code == sf::Keyboard::Key::R) {
                     raceManager.respawnCar(0);
+                    wrongWayFrameCounts[0] = 0;
+                }
             }
         }
 
@@ -326,6 +350,8 @@ int main()
         }
 
         raceManager.update();
+
+        handleWrongWayDetection(raceManager, trackProgress, cars, wrongWayFrameCounts, WRONG_WAY_RESPAWN_FRAMES);
 
         render(window, cars, carShapes, coordTransform, innerBorder.get(), outerBorder.get());
         hud.draw(window, raceManager, trackProgress, 2);
