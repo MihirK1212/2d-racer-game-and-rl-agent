@@ -286,7 +286,7 @@ int main()
             sf::Keyboard::Key::W,
             sf::Keyboard::Key::S,
         };
-        inputHandler2 = std::make_unique<KeyboardCarInputHandler>(keyBindings)
+        inputHandler2 = std::make_unique<KeyboardCarInputHandler>(keyBindings);
     }
 
     std::vector<std::unique_ptr<CarStateExporter>> outputHandlers;
