@@ -121,14 +121,12 @@ void drawCurve(sf::RenderWindow &window,
     window.draw(vertices);
 }
 
-std::vector<CollisionStateResult> handleCollisions(const std::vector<std::unique_ptr<Car>> &cars,
+void handleCollisions(const std::vector<std::unique_ptr<Car>> &cars,
                       ParametricCurve2D *innerBorder,
-                      ParametricCurve2D *outerBorder)
+                      ParametricCurve2D *outerBorder,
+                      std::vector<CollisionStateResult> &collisionStateResults)
 {
     size_t numCars = cars.size();
-
-    std::vector<CollisionStateResult> collisionStateResults;
-    collisionStateResults.resize(numCars);
 
     for (size_t i = 0; i < numCars; i++)
     {
@@ -163,8 +161,6 @@ std::vector<CollisionStateResult> handleCollisions(const std::vector<std::unique
             }
         }
     }
-
-    return collisionStateResults;
 }
 
 void drawStartFinishLine(sf::RenderWindow &window,
@@ -325,6 +321,12 @@ int main()
     std::vector<int> wrongWayFrameCounts(cars.size(), 0);
 
     std::vector<CollisionStateResult> collisionStateResults;
+    collisionStateResults.resize(cars.size());
+    for(size_t i = 0; i < cars.size(); i++) {
+        collisionStateResults[i].collidedWithCar = -1;
+        collisionStateResults[i].collidedWithInnerBorder = false;
+        collisionStateResults[i].collidedWithOuterBorder = false;
+    }
 
     while (window.isOpen())
     {
@@ -372,7 +374,7 @@ int main()
             updateGame(*cars[0]);
             updateGame(*cars[1]);
 
-            collisionStateResults = handleCollisions(cars, innerBorder.get(), outerBorder.get());
+            handleCollisions(cars, innerBorder.get(), outerBorder.get(), collisionStateResults);
         }
 
         raceManager.update();
