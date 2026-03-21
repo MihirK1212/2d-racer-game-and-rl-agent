@@ -3,13 +3,10 @@
 #include <algorithm>
 #include <iostream>
 
-TrackProgress::TrackProgress(float centerlineRadius, float straightLength, int numCars)
-    : centerline(std::make_unique<RoundedRectangleCurve>(centerlineRadius, straightLength)),
+TrackProgress::TrackProgress(ParametricCurve2D* centerline, int numCars)
+    : centerline(centerline),
       carsProgress(numCars)
 {
-    static constexpr int NUM_CURVE_POINTS = 720;
-    centerline->generate(0, 360.0 - (360.0 / NUM_CURVE_POINTS), NUM_CURVE_POINTS);
-
     checkpointThetas.reserve(NUM_CHECKPOINTS);
     for (int i = 0; i < NUM_CHECKPOINTS; ++i) {
         checkpointThetas.push_back(i * CHECKPOINT_INTERVAL);

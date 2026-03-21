@@ -2,10 +2,9 @@
 #define TRACK_PROGRESS_H
 
 #include <vector>
-#include <memory>
 
 #include "../engine/vector.h"
-#include "../entity/curve/rounded_rectangle_curve.h"
+#include "../entity/curve/curve.h"
 
 struct CarProgress {
     double currentTheta = 0.0;
@@ -28,7 +27,7 @@ class TrackProgress {
     static constexpr double WRONG_WAY_THRESHOLD = -0.5;
     static constexpr double START_LINE_SNAP_TOLERANCE = 1.0;
 
-    std::unique_ptr<RoundedRectangleCurve> centerline;
+    ParametricCurve2D* centerline;
     std::vector<double> checkpointThetas;
     std::vector<CarProgress> carsProgress;
     bool initialized = false;
@@ -41,7 +40,7 @@ class TrackProgress {
     void updateLapsAndCheckpoints(int carIndex, double delta);
 
 public:
-    TrackProgress(float centerlineRadius, float straightLength, int numCars);
+    TrackProgress(ParametricCurve2D* centerline, int numCars);
 
     void initializeCar(int carIndex, const Vector2D& position);
     void update(int carIndex, const Vector2D& position);

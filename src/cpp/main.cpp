@@ -16,6 +16,7 @@
 #include "./engine/collision/collision.h"
 #include "./interaction/car/input/keyboard_car_input_handler.h"
 #include "./interaction/car/input/shm_car_input_handler.h"
+#include "./interaction/car/input/centerline_car_input_handler.h"
 #include "./interaction/car/export/console_car_state_exporter.h"
 #include "./interaction/car/export/shm_car_state_exporter.h"
 #include "./interaction/ipc/shared_memory.h"
@@ -240,6 +241,9 @@ int main()
     constexpr float STRAIGHT_LENGTH = 40.0f;
     constexpr float CENTERLINE_RADIUS = (INNER_RADIUS + OUTER_RADIUS) / 2.0f;
 
+    bool rlMode = false;
+    bool stepMode = false;
+
     sf::RenderWindow window = createWindow();
 
     // Cars start on the track at theta=0 (rightmost point), facing up (+y = counterclockwise)
@@ -251,9 +255,25 @@ int main()
     cars.push_back(std::make_unique<Car>(startPos0.x, startPos0.y, 0.7, 1.5));
     cars.push_back(std::make_unique<Car>(startPos1.x, startPos1.y, 0.7, 1.5));
 
+    CoordinateTransform coordTransform(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+    auto innerBorder = std::make_unique<RoundedRectangleCurve>(INNER_RADIUS, STRAIGHT_LENGTH);
+    auto outerBorder = std::make_unique<RoundedRectangleCurve>(OUTER_RADIUS, STRAIGHT_LENGTH);
+    auto centerline  = std::make_unique<RoundedRectangleCurve>(CENTERLINE_RADIUS, STRAIGHT_LENGTH);
+
+    innerBorder->generate(0, 360, 200);
+    outerBorder->generate(0, 360, 200);
+    centerline->generate(0, 360, 200);
+
     SharedGameMemory shm;
 
-    auto inputHandler1 = std::make_unique<KeyboardCarInputHandler>();
+    auto synchronizer = std::make_unique<CarSynchronizer>(rlMode, stepMode, shm);
+
+    std::unique_ptr<CarInputHandler> inputHandler1;
+    // if (rlMode && stepMode)
+    inputHandler1 = std::make_unique<CenterlineCarInputHandler>(centerline.get());
+    // else
+    //     inputHandler1 = std::make_unique<KeyboardCarInputHandler>();
 
     CarKeyBindings keyBindings = {
         sf::Keyboard::Key::A,
@@ -265,21 +285,10 @@ int main()
     // auto inputHandler2 = std::make_unique<SHMCarInputHandler>(shm);
 
     std::vector<std::unique_ptr<CarStateExporter>> outputHandlers;
-    // outputHandlers.push_back(std::make_unique<ConsoleCarStateExporter>());
     outputHandlers.push_back(std::make_unique<SHMCarStateExporter>(shm));
 
-    auto synchronizer = std::make_unique<CarSynchronizer>(false, false, shm);
-
-    CoordinateTransform coordTransform(SCREEN_WIDTH, SCREEN_HEIGHT);
-
-    auto innerBorder = std::make_unique<RoundedRectangleCurve>(INNER_RADIUS, STRAIGHT_LENGTH);
-    auto outerBorder = std::make_unique<RoundedRectangleCurve>(OUTER_RADIUS, STRAIGHT_LENGTH);
-
-    innerBorder->generate(0, 360, 200);
-    outerBorder->generate(0, 360, 200);
-
     // Race systems
-    TrackProgress trackProgress(CENTERLINE_RADIUS, STRAIGHT_LENGTH, 2);
+    TrackProgress trackProgress(centerline.get(), 2);
     trackProgress.initializeCar(0, startPos0);
     trackProgress.initializeCar(1, startPos1);
 
