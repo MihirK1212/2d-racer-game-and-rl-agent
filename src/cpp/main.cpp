@@ -241,7 +241,7 @@ int main()
     constexpr float STRAIGHT_LENGTH = 40.0f;
     constexpr float CENTERLINE_RADIUS = (INNER_RADIUS + OUTER_RADIUS) / 2.0f;
 
-    bool rlMode = false;
+    bool externalInputMode = false;
     bool stepMode = false;
 
     sf::RenderWindow window = createWindow();
@@ -267,22 +267,27 @@ int main()
 
     SharedGameMemory shm;
 
-    auto synchronizer = std::make_unique<CarSynchronizer>(rlMode, stepMode, shm);
+    auto synchronizer = std::make_unique<CarSynchronizer>(externalInputMode, stepMode, shm);
 
     std::unique_ptr<CarInputHandler> inputHandler1;
-    // if (rlMode && stepMode)
-    inputHandler1 = std::make_unique<CenterlineCarInputHandler>(centerline.get());
-    // else
-    //     inputHandler1 = std::make_unique<KeyboardCarInputHandler>();
+    if (externalInputMode && stepMode) {
+        inputHandler1 = std::make_unique<CenterlineCarInputHandler>(centerline.get());
+    } else {
+        inputHandler1 = std::make_unique<KeyboardCarInputHandler>();
+    }
 
-    CarKeyBindings keyBindings = {
-        sf::Keyboard::Key::A,
-        sf::Keyboard::Key::D,
-        sf::Keyboard::Key::W,
-        sf::Keyboard::Key::S,
-    };
-    auto inputHandler2 = std::make_unique<KeyboardCarInputHandler>(keyBindings);
-    // auto inputHandler2 = std::make_unique<SHMCarInputHandler>(shm);
+    std::unique_ptr<CarInputHandler> inputHandler2;
+    if(externalInputMode) {
+        inputHandler2 = std::make_unique<SHMCarInputHandler>(shm);
+    } else {
+        CarKeyBindings keyBindings = {
+            sf::Keyboard::Key::A,
+            sf::Keyboard::Key::D,
+            sf::Keyboard::Key::W,
+            sf::Keyboard::Key::S,
+        };
+        inputHandler2 = std::make_unique<KeyboardCarInputHandler>(keyBindings)
+    }
 
     std::vector<std::unique_ptr<CarStateExporter>> outputHandlers;
     outputHandlers.push_back(std::make_unique<SHMCarStateExporter>(shm));
@@ -337,11 +342,11 @@ int main()
         if (raceManager.shouldAcceptInput()) {
             inputHandler1->apply(*cars[0]);
 
-            if(synchronizer->isRlMode() && synchronizer->isActionReady()) {
+            if(synchronizer->isExternalInputMode() && synchronizer->isActionReady()) {
                 inputHandler2->apply(*cars[1]);
                 synchronizer->setActionReady(false);
             }
-            else if(!synchronizer->isRlMode()) {
+            else if(!synchronizer->isExternalInputMode()) {
                 inputHandler2->apply(*cars[1]);
             }
         }
