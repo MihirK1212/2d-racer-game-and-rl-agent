@@ -19,13 +19,12 @@ struct SharedGameData {
     uint8_t input_left;
     uint8_t input_right;
 
-    // Python -> C++ (action ready + reset flag + done flag)
+    // Flags
     uint8_t action_ready; // Python sets to 1 after writing action
-    uint8_t reset_flag; // Python sets to 1 to request episode reset
-    
-    // C++ -> Python (state flag + car state)
     uint8_t state_ready; // C++ sets to 1 after writing state
+    uint8_t reset_flag; // Python sets to 1 to request episode reset
     uint8_t done_flag; // C++ sets to 1 when episode ends
+    uint8_t _pad[3];
     
     // uint8_t lap_count;
     // uint8_t checkpoints_crossed;
@@ -39,6 +38,7 @@ struct SharedGameData {
     double speed;
     double dir_x;
     double dir_y; 
+    double tangential_accel;
 
     // uint8_t opponent_lap_count;
     // uint8_t opponent_checkpoints_crossed;
