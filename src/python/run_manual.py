@@ -4,46 +4,34 @@ from pynput import keyboard
 from multiprocessing import shared_memory, resource_tracker
 
 SHM_NAME = "RacerGameSHM"
-SHM_SIZE = 56
+SHM_SIZE = 160
 
-# struct format
-INPUT_FORMAT = "4B"
-STATE_FORMAT = "B3x6d"
+# ── Byte offsets (must match #pragma pack(push,1) SharedGameData) ──
+OFF_INPUT        = 0    # 4 × uint8: up, down, left, right
+OFF_ACTION_READY = 4    # uint8
+OFF_STATE_READY  = 5    # uint8
+OFF_RESET_FLAG   = 6    # uint8
+OFF_DONE_FLAG    = 7    # uint8
 
-# Updated keys dictionary
-keys_pressed = {
-    "w": False,
-    "s": False,
-    "a": False,
-    "d": False,
-    "esc": False
-}
+OFF_PLAYER_U8    = 8    # 4 × uint8: lap_count, checkpoints_crossed, rank, collided
+OFF_PLAYER_DBL   = 16   # 10 × double (after 4 bytes padding)
+OFF_OPP_U8       = 96   # 4 × uint8: same fields for opponent
+OFF_OPP_DBL      = 104  # 7 × double (after 4 bytes padding)
+
+keys_pressed = {"w": False, "s": False, "a": False, "d": False, "esc": False}
 
 def on_press(key):
     try:
-        if key.char == 'w':
-            keys_pressed["w"] = True
-        elif key.char == 's':
-            keys_pressed["s"] = True
-        elif key.char == 'a':
-            keys_pressed["a"] = True
-        elif key.char == 'd':
-            keys_pressed["d"] = True
+        if key.char in keys_pressed:
+            keys_pressed[key.char] = True
     except AttributeError:
-        # Handle special keys like ESC
         if key == keyboard.Key.esc:
             keys_pressed["esc"] = True
 
 def on_release(key):
     try:
-        if key.char == 'w':
-            keys_pressed["w"] = False
-        elif key.char == 's':
-            keys_pressed["s"] = False
-        elif key.char == 'a':
-            keys_pressed["a"] = False
-        elif key.char == 'd':
-            keys_pressed["d"] = False
+        if key.char in keys_pressed:
+            keys_pressed[key.char] = False
     except AttributeError:
         if key == keyboard.Key.esc:
             keys_pressed["esc"] = False
@@ -51,8 +39,57 @@ def on_release(key):
 listener = keyboard.Listener(on_press=on_press, on_release=on_release)
 listener.start()
 
-def is_key_pressed(key):
-    return keys_pressed.get(key, False)
+
+def read_state(buf):
+    lap, cp, rank, collided = struct.unpack_from("4B", buf, OFF_PLAYER_U8)
+    (angle_on_track, total_progress, pos_x, pos_y, speed,
+     dir_x, dir_y, dist_inner, dist_outer,
+     heading_vs_tangent) = struct.unpack_from("10d", buf, OFF_PLAYER_DBL)
+
+    opp_lap, opp_cp, opp_rank, opp_collided = struct.unpack_from("4B", buf, OFF_OPP_U8)
+    (opp_angle, opp_progress, opp_x, opp_y, opp_speed,
+     opp_dx, opp_dy) = struct.unpack_from("7d", buf, OFF_OPP_DBL)
+
+    done = struct.unpack_from("B", buf, OFF_DONE_FLAG)[0]
+
+    return {
+        "done": done,
+        "lap": lap, "checkpoints": cp, "rank": rank, "collided": collided,
+        "angle_on_track": angle_on_track, "total_progress": total_progress,
+        "pos_x": pos_x, "pos_y": pos_y, "speed": speed,
+        "dir_x": dir_x, "dir_y": dir_y,
+        "dist_inner": dist_inner, "dist_outer": dist_outer,
+        "heading_vs_tangent": heading_vs_tangent,
+        "opp_lap": opp_lap, "opp_checkpoints": opp_cp,
+        "opp_rank": opp_rank, "opp_collided": opp_collided,
+        "opp_angle": opp_angle, "opp_progress": opp_progress,
+        "opp_x": opp_x, "opp_y": opp_y, "opp_speed": opp_speed,
+        "opp_dx": opp_dx, "opp_dy": opp_dy,
+    }
+
+
+def print_state(s):
+    print("═══════════════════ Game State ═══════════════════")
+    print(f"  Done flag:       {s['done']}")
+    print("─── Player ───")
+    print(f"  Lap: {s['lap']}   Checkpoints: {s['checkpoints']}   Rank: {s['rank']}   Collided: {s['collided']}")
+    print(f"  Position:        ({s['pos_x']:.3f}, {s['pos_y']:.3f})")
+    print(f"  Speed:            {s['speed']:.3f}")
+    print(f"  Direction:       ({s['dir_x']:.3f}, {s['dir_y']:.3f})")
+    print(f"  Angle on track:   {s['angle_on_track']:.3f}")
+    print(f"  Total progress:   {s['total_progress']:.3f}")
+    print(f"  Dist inner wall:  {s['dist_inner']:.3f}")
+    print(f"  Dist outer wall:  {s['dist_outer']:.3f}")
+    print(f"  Heading vs tang:  {s['heading_vs_tangent']:.3f}")
+    print("─── Opponent ───")
+    print(f"  Lap: {s['opp_lap']}   Checkpoints: {s['opp_checkpoints']}   Rank: {s['opp_rank']}   Collided: {s['opp_collided']}")
+    print(f"  Position:        ({s['opp_x']:.3f}, {s['opp_y']:.3f})")
+    print(f"  Speed:            {s['opp_speed']:.3f}")
+    print(f"  Direction:       ({s['opp_dx']:.3f}, {s['opp_dy']:.3f})")
+    print(f"  Angle on track:   {s['opp_angle']:.3f}")
+    print(f"  Total progress:   {s['opp_progress']:.3f}")
+    print()
+
 
 def main():
     try:
@@ -62,50 +99,31 @@ def main():
         print("Make sure the game is running first.")
         return
 
-    # The C++ game owns the shared memory — prevent Python's resource tracker
-    # from destroying it when this process exits.
     resource_tracker.unregister(f"/{SHM_NAME}", "shared_memory")
-
-    buffer = shm.buf
+    buf = shm.buf
 
     print("Connected to shared memory.")
     print("Use WASD to drive, ESC to quit.\n")
 
     try:
         while True:
-            # Map WASD to the existing logic
-            up    = int(is_key_pressed("w"))
-            down  = int(is_key_pressed("s"))
-            left  = int(is_key_pressed("a"))
-            right = int(is_key_pressed("d"))
-            
-            # Write inputs (bytes 0-3)
-            buffer[0:4] = struct.pack("4B", up, down, left, right)
+            up    = int(keys_pressed["w"])
+            down  = int(keys_pressed["s"])
+            left  = int(keys_pressed["a"])
+            right = int(keys_pressed["d"])
 
-            # Set action_ready flag to 1
-            buffer[4:5] = struct.pack("B", 1)
+            struct.pack_into("4B", buf, OFF_INPUT, up, down, left, right)
+            struct.pack_into("B", buf, OFF_ACTION_READY, 1)
 
-            # Get state_ready flag
-            state_ready = struct.unpack("B", buffer[5:6])[0]
-
+            state_ready = struct.unpack_from("B", buf, OFF_STATE_READY)[0]
             if state_ready:
-                pos_x, pos_y, speed, dir_x, dir_y, tangential_accel = struct.unpack(
-                    "6d", buffer[11:59]
-                )
+                s = read_state(buf)
+                print_state(s)
+                struct.pack_into("B", buf, OFF_STATE_READY, 0)
 
-                print("─── Car State ───")
-                print(f"Position:     ({pos_x:.3f}, {pos_y:.3f})")
-                print(f"Speed:         {speed:.3f}")
-                print(f"Direction:    ({dir_x:.3f}, {dir_y:.3f})")
-                print(f"Acceleration:  {tangential_accel:.3f}")
-                print()
+            time.sleep(1 / 60)
 
-                # Set state_ready flag to 0
-                buffer[5:6] = struct.pack("B", 0)
-
-            time.sleep(1/60)
-
-            if is_key_pressed("esc"):
+            if keys_pressed["esc"]:
                 print("ESC pressed, exiting.")
                 break
 

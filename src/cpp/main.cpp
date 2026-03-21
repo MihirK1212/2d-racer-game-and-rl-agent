@@ -32,6 +32,7 @@
 
 #define FRAME_RATE 60
 
+
 sf::RenderWindow createWindow()
 {
     sf::RenderWindow window(
@@ -120,23 +121,30 @@ void drawCurve(sf::RenderWindow &window,
     window.draw(vertices);
 }
 
-void handleCollisions(const std::vector<std::unique_ptr<Car>> &cars,
+std::vector<CollisionStateResult> handleCollisions(const std::vector<std::unique_ptr<Car>> &cars,
                       ParametricCurve2D *innerBorder,
                       ParametricCurve2D *outerBorder)
 {
     size_t numCars = cars.size();
+
+    std::vector<CollisionStateResult> collisionStateResults;
+    collisionStateResults.resize(numCars);
 
     for (size_t i = 0; i < numCars; i++)
     {
         Car *car = cars[i].get();
 
         CollisionResult resultInner = detectCarVsCurve(car, innerBorder);
-        if (resultInner.collided)
+        if (resultInner.collided) {
             resolveCarVsCurve(car, innerBorder, resultInner);
+            collisionStateResults[i].collidedWithInnerBorder = true;
+        }
 
         CollisionResult resultOuter = detectCarVsCurve(car, outerBorder);
-        if (resultOuter.collided)
+        if (resultOuter.collided) {
             resolveCarVsCurve(car, outerBorder, resultOuter);
+            collisionStateResults[i].collidedWithOuterBorder = true;
+        }
     }
 
     for (size_t i = 0; i < numCars; i++)
@@ -148,10 +156,15 @@ void handleCollisions(const std::vector<std::unique_ptr<Car>> &cars,
             Car *car2 = cars[j].get();
 
             CollisionResult result = detectCarVsCar(car1, car2);
-            if (result.collided)
+            if (result.collided) {
                 resolveCarVsCar(car1, car2, result);
+                collisionStateResults[i].collidedWithCar = static_cast<int>(j); 
+                collisionStateResults[j].collidedWithCar = static_cast<int>(i);
+            }
         }
     }
+
+    return collisionStateResults;
 }
 
 void drawStartFinishLine(sf::RenderWindow &window,
@@ -311,6 +324,8 @@ int main()
     carShapes.push_back(createCarShape(*cars[1], coordTransform, sf::Color(80, 140, 255)));
     std::vector<int> wrongWayFrameCounts(cars.size(), 0);
 
+    std::vector<CollisionStateResult> collisionStateResults;
+
     while (window.isOpen())
     {
         while (const std::optional event = window.pollEvent())
@@ -328,7 +343,7 @@ int main()
             }
         }
 
-        shmGameStateExporter->exportState(*cars[1]);
+        shmGameStateExporter->exportState(*cars[0], *cars[1], collisionStateResults, trackProgress, raceManager, innerBorder.get(), outerBorder.get(), centerline.get());
 
         if(synchronizer->isStepMode()) {
             while(!synchronizer->isActionReady()){
@@ -357,7 +372,7 @@ int main()
             updateGame(*cars[0]);
             updateGame(*cars[1]);
 
-            handleCollisions(cars, innerBorder.get(), outerBorder.get());
+            collisionStateResults = handleCollisions(cars, innerBorder.get(), outerBorder.get());
         }
 
         raceManager.update();
