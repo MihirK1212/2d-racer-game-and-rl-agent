@@ -4,24 +4,24 @@
 #include "../ipc/shared_memory.h"
 
 class CarSynchronizer {
-    bool rlMode;
+    bool externalInputMode;
     bool stepMode;
     SharedGameMemory& sgm;
 
     public:
 
-    CarSynchronizer(bool rlMode, bool stepMode, SharedGameMemory& sgm) : rlMode(rlMode), stepMode(stepMode), sgm(sgm) {}
+    CarSynchronizer(bool externalInputMode, bool stepMode, SharedGameMemory& sgm) : externalInputMode(externalInputMode), stepMode(stepMode), sgm(sgm) {}
 
     bool isStepMode() {
         return stepMode;
     }
 
-    bool isRlMode() {
-        return rlMode;
+    bool isExternalInputMode() {
+        return externalInputMode;
     }
 
     bool isActionReady() {
-        if(!isRlMode()) {
+        if(!isExternalInputMode()) {
             // in non-rl mode, action is always ready, as it is controlled by the user
             return true; 
         }
@@ -35,7 +35,7 @@ class CarSynchronizer {
     }
 
     void setActionReady(bool val) {
-        if(!isRlMode()) {
+        if(!isExternalInputMode()) {
             // in non-rl mode, action is always ready, as it is controlled by the user
             return; 
         }
@@ -49,7 +49,7 @@ class CarSynchronizer {
     }
 
     bool isResetFlagSet() {
-        if(!isRlMode()) {
+        if(!isExternalInputMode()) {
             // in non-rl mode, reset flag is always unset, as it is controlled by the user
             return false; 
         }
@@ -63,7 +63,7 @@ class CarSynchronizer {
     }
 
     void setResetFlag(bool val) {
-        if(!isRlMode()) {
+        if(!isExternalInputMode()) {
             // in non-rl mode, reset flag is always unset, as it is controlled by the user
             return; 
         }

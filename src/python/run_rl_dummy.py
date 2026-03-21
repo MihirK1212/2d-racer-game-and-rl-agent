@@ -5,7 +5,7 @@ Reads state from shared memory, picks random WASD actions, writes them and sets 
 import struct
 import time
 import random
-from multiprocessing import shared_memory
+from multiprocessing import shared_memory, resource_tracker
 
 SHM_NAME = "RacerGameSHM"
 SHM_SIZE = 56
@@ -22,6 +22,10 @@ def main():
         print(f"Shared memory '{SHM_NAME}' not found.")
         print("Make sure the game is running first.")
         return
+
+    # The C++ game owns the shared memory — prevent Python's resource tracker
+    # from destroying it when this process exits.
+    resource_tracker.unregister(f"/{SHM_NAME}", "shared_memory")
 
     buffer = shm.buf
 

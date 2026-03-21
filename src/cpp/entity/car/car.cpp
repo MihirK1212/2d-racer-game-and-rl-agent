@@ -247,6 +247,14 @@ void Car::rotateClockwise(double angleDegrees) {
     }
 }
 
+void Car::reset(Vector2D pos, Vector2D dir)
+{
+    position = pos;
+    direction = dir.normalize();
+    speed = 0;
+    tangentialAcceleration = 0;
+}
+
 void Car::printCarState() const
 {
     std::cout << "--------------------------------" << "\n";

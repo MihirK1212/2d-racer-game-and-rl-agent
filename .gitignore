@@ -62,6 +62,8 @@ Testing/
 # VS Code
 .vscode/
 
+.cursor/
+
 # CLion / JetBrains
 .idea/
 
