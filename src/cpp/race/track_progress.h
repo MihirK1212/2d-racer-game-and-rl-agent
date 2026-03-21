@@ -38,7 +38,7 @@ class TrackProgress {
     double forwardThetaDistance(double fromTheta, double toTheta) const;
     int getCompletedCheckpointsThisLap(const CarProgress& cp) const;
     double computeValidatedProgress(const CarProgress& cp) const;
-    void updateCheckpoints(int carIndex, double delta);
+    void updateLapsAndCheckpoints(int carIndex, double delta);
 
 public:
     TrackProgress(float centerlineRadius, float straightLength, int numCars);

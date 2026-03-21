@@ -60,14 +60,13 @@ double TrackProgress::computeValidatedProgress(const CarProgress& cp) const {
     return baseProgress;
 }
 
-void TrackProgress::updateCheckpoints(int carIndex, double delta) {
+void TrackProgress::updateLapsAndCheckpoints(int carIndex, double delta) {
     if (delta <= 0.0) return;
 
     CarProgress& cp = carsProgress[carIndex];
     double prev = cp.previousTheta;
     double curr = cp.currentTheta;
 
-    // if car crosses multiple checkpoints in a single frame, we need to update the next checkpoint
     for (int guard = 0; guard < NUM_CHECKPOINTS; ++guard) {
         double nextCpTheta = checkpointThetas[cp.nextCheckpoint];
 
@@ -79,6 +78,11 @@ void TrackProgress::updateCheckpoints(int carIndex, double delta) {
         }
 
         if (!crossed) break;
+
+        if (cp.nextCheckpoint == 0 && cp.firstUpdateDone) {
+            cp.lapsCompleted++;
+        }
+
         cp.nextCheckpoint = (cp.nextCheckpoint + 1) % NUM_CHECKPOINTS;
     }
 }
@@ -126,21 +130,9 @@ void TrackProgress::update(int carIndex, const Vector2D& position) {
 
     cp.goingWrongWay = (delta < WRONG_WAY_THRESHOLD);
 
-    // Lap completion must be checked BEFORE checkpoint update because
-    // checkpoint 0 sits at the start line and would advance nextCheckpoint
-    // away from 0 in the same frame, preventing the lap from being counted.
-    // Skip the check on the very first update after init/reset to avoid a
-    // false lap from the initialization theta jumping across the 0/360 seam.
-    if (cp.firstUpdateDone && delta > 0.0 && cp.nextCheckpoint == 0) {
-        bool crossedStart = (cp.previousTheta > 300.0 && cp.currentTheta < 60.0);
-        if (crossedStart) {
-            cp.lapsCompleted++;
-        }
-    }
+    updateLapsAndCheckpoints(carIndex, delta);
 
     cp.firstUpdateDone = true;
-
-    updateCheckpoints(carIndex, delta);
 
     cp.totalProgress = computeValidatedProgress(cp);
 }
