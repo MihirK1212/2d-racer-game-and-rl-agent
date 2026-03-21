@@ -1,7 +1,7 @@
 #ifndef CAR_SYNCHRONIZER_H
 #define CAR_SYNCHRONIZER_H
 
-#include "../ipc/shared_memory.h"
+#include "./ipc/shared_memory.h"
 
 class CarSynchronizer {
     bool externalInputMode;
