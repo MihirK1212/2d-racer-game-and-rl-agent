@@ -106,7 +106,7 @@ def main():
                 struct.pack_into("B", buf, OFF_ACTION_READY, 1)
                 struct.pack_into("B", buf, OFF_STATE_READY, 0)
 
-                time.sleep(1/3)
+                time.sleep(1/30)
 
                 keys = []
                 if up:    keys.append("w")
