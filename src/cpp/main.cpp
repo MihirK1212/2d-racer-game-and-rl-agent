@@ -241,8 +241,8 @@ int main()
     constexpr float STRAIGHT_LENGTH = 40.0f;
     constexpr float CENTERLINE_RADIUS = (INNER_RADIUS + OUTER_RADIUS) / 2.0f;
 
-    bool externalInputMode = false;
-    bool stepMode = false;
+    bool externalInputMode = true;
+    bool stepMode = true;
 
     sf::RenderWindow window = createWindow();
 
