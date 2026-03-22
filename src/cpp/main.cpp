@@ -324,6 +324,7 @@ int main()
     std::vector<sf::RectangleShape> carShapes;
     carShapes.push_back(createCarShape(*cars[0], coordTransform, sf::Color::Red));
     carShapes.push_back(createCarShape(*cars[1], coordTransform, sf::Color(80, 140, 255)));
+
     std::vector<int> wrongWayFrameCounts(cars.size(), 0);
 
     std::vector<CollisionStateResult> collisionStateResults;
