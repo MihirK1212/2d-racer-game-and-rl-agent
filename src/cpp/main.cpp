@@ -128,6 +128,12 @@ void handleCollisions(const std::vector<std::unique_ptr<Car>> &cars,
 {
     size_t numCars = cars.size();
 
+    for(size_t i = 0; i < numCars; i++) {
+        collisionStateResults[i].collidedWithCar = -1;
+        collisionStateResults[i].collidedWithInnerBorder = false;
+        collisionStateResults[i].collidedWithOuterBorder = false;
+    }
+
     for (size_t i = 0; i < numCars; i++)
     {
         Car *car = cars[i].get();
@@ -322,12 +328,7 @@ int main()
 
     std::vector<CollisionStateResult> collisionStateResults;
     collisionStateResults.resize(cars.size());
-    for(size_t i = 0; i < cars.size(); i++) {
-        collisionStateResults[i].collidedWithCar = -1;
-        collisionStateResults[i].collidedWithInnerBorder = false;
-        collisionStateResults[i].collidedWithOuterBorder = false;
-    }
-
+    
     while (window.isOpen())
     {
         while (const std::optional event = window.pollEvent())
