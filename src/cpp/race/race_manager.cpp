@@ -3,56 +3,80 @@
 RaceManager::RaceManager(TrackProgress& trackProgress,
                          const std::vector<Car*>& cars,
                          const std::vector<CarStartConfig>& startConfigs)
-    : trackProgress(trackProgress), cars(cars), startConfigs(startConfigs)
+    : trackProgress(trackProgress), cars(cars), startConfigs(startConfigs),
+      wrongWayFrameCounts(cars.size(), 0)
 {
     resetRace();
 }
 
+void RaceManager::resetAndStartRace() {
+    resetRace();
+    state = RaceState::RACING;
+}
+
 void RaceManager::onSpacePressed() {
-    if (state == RaceState::WAITING) {
-        state = RaceState::COUNTDOWN;
-        countdownStep = 0;
-        countdownClock.restart();
-    } else if (state == RaceState::FINISHED) {
-        resetRace();
+    if (state == RaceState::WAITING || state == RaceState::FINISHED) {
+        resetAndStartRace();
     }
 }
 
-void RaceManager::update() {
-    if (state == RaceState::COUNTDOWN) {
-        float elapsed = countdownClock.getElapsedTime().asSeconds();
-        countdownStep = static_cast<int>(elapsed / COUNTDOWN_STEP_SECONDS);
-
-        if (countdownStep >= COUNTDOWN_STEPS) {
-            state = RaceState::RACING;
-        }
+void RaceManager::updateRaceProgress() {
+    if (state != RaceState::RACING) {
+        return;
     }
 
-    if (state == RaceState::RACING) {
-        for (size_t i = 0; i < cars.size(); ++i) {
-            trackProgress.update(static_cast<int>(i), cars[i]->getPosition());
-        }
+    for (size_t i = 0; i < cars.size(); ++i) {
+        trackProgress.update(static_cast<int>(i), cars[i]->getPosition());
+    }
+}
 
-        int bestFinisher = -1;
-        double bestProgress = -1.0;
-        for (size_t i = 0; i < cars.size(); ++i) {
-            const CarProgress& cp = trackProgress.getCarProgress(static_cast<int>(i));
-            if (cp.lapsCompleted >= TOTAL_LAPS && cp.totalProgress > bestProgress) {
-                bestProgress = cp.totalProgress;
-                bestFinisher = static_cast<int>(i);
+void RaceManager::updateRaceOutcome() {
+    if (state != RaceState::RACING) {
+        return;
+    }
+
+    int bestFinisher = -1;
+    double bestProgress = -1.0;
+    for (size_t i = 0; i < cars.size(); ++i) {
+        const CarProgress& cp = trackProgress.getCarProgress(static_cast<int>(i));
+        if (cp.lapsCompleted >= TOTAL_LAPS && cp.totalProgress > bestProgress) {
+            bestProgress = cp.totalProgress;
+            bestFinisher = static_cast<int>(i);
+        }
+    }
+    if (bestFinisher >= 0) {
+        state = RaceState::FINISHED;
+        winnerCarIndex = bestFinisher;
+    }
+}
+
+void RaceManager::handleWrongWay() {
+    if (state != RaceState::RACING) return;
+
+    for (size_t i = 0; i < cars.size(); ++i) {
+        const CarProgress& cp = trackProgress.getCarProgress(static_cast<int>(i));
+        if (cp.goingWrongWay) {
+            wrongWayFrameCounts[i]++;
+            if (wrongWayFrameCounts[i] > WRONG_WAY_RESPAWN_FRAMES) {
+                respawnCar(static_cast<int>(i));
+                wrongWayFrameCounts[i] = 0;
             }
-        }
-        if (bestFinisher >= 0) {
-            state = RaceState::FINISHED;
-            winnerCarIndex = bestFinisher;
+        } else {
+            wrongWayFrameCounts[i] = 0;
         }
     }
+}
+
+void RaceManager::updateRace() {
+    updateRaceProgress();
+    handleWrongWay();
+    updateRaceOutcome();
 }
 
 void RaceManager::resetRace() {
     state = RaceState::WAITING;
-    countdownStep = 0;
     winnerCarIndex = -1;
+    std::fill(wrongWayFrameCounts.begin(), wrongWayFrameCounts.end(), 0);
 
     for (size_t i = 0; i < cars.size(); ++i) {
         cars[i]->reset(startConfigs[i].position, startConfigs[i].direction);
@@ -70,13 +94,6 @@ void RaceManager::respawnCar(int carIndex) {
 
 RaceState RaceManager::getState() const {
     return state;
-}
-
-int RaceManager::getCountdownNumber() const {
-    // countdownStep: 0->"3", 1->"2", 2->"1", 3->"GO!"
-    if (countdownStep < 3)
-        return 3 - countdownStep;
-    return 0; // 0 means "GO!"
 }
 
 int RaceManager::getWinnerIndex() const {
@@ -100,6 +117,10 @@ int RaceManager::getLeaderIndex() const {
     return leader;
 }
 
-bool RaceManager::shouldAcceptInput() const {
+bool RaceManager::isRacing() const {
     return state == RaceState::RACING;
+}
+
+bool RaceManager::isIdleState() const {
+    return state == RaceState::WAITING || state == RaceState::FINISHED;
 }

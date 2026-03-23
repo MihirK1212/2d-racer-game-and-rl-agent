@@ -1,6 +1,9 @@
 #ifndef SHM_GAME_STATE_EXPORTER_H
 #define SHM_GAME_STATE_EXPORTER_H
 
+#include <memory>
+#include <vector>
+
 #include "../../entity/car/car.h"
 #include "../ipc/shared_memory.h"
 #include "../../race/track_progress.h"
@@ -89,43 +92,31 @@ class SHMGameStateExporter
     public:
     explicit SHMGameStateExporter(SharedGameMemory &sgm) : sgm(sgm) {}
 
-    void exportStateForCar(
-        int carIndex,
-        const Car &car,
-        const CollisionStateResult &collisionStateResult,
-        const CarProgress &carProgress,
-        const RaceManager &raceManager,
-        const ParametricCurve2D *innerBorder,
-        const ParametricCurve2D *outerBorder,
-        const ParametricCurve2D *centerline
-    ) {
-        SharedGameData *data = sgm.getData();
-        if (!data) return;
-
-        int rank = (raceManager.getLeaderIndex() == carIndex) ? 1 : 2;
-
-        if (carIndex == 0)
-            writeSelfCarState(data, car, collisionStateResult, carProgress, rank, innerBorder, outerBorder, centerline);
-        else
-            writeOpponentCarState(data, car, collisionStateResult, carProgress, rank);
-    }
-
     void exportState(
-        const Car &userControlledCar, const Car &opponentCar, 
+        int selfCarIndex,
+        const std::vector<std::unique_ptr<Car>> &cars,
         const std::vector<CollisionStateResult> &collisionStateResults,
         const TrackProgress &trackProgress, const RaceManager &raceManager,
         const ParametricCurve2D *innerBorder, const ParametricCurve2D *outerBorder, const ParametricCurve2D *centerline
     )
     {
         SharedGameData *data = sgm.getData();
+        if (!data) return;
 
-        if (!data)
-        {
-            return;
-        }
+        int oppCarIndex = 1 - selfCarIndex;
 
-        exportStateForCar(0, userControlledCar, collisionStateResults[0], trackProgress.getCarProgress(0), raceManager, innerBorder, outerBorder, centerline);
-        exportStateForCar(1, opponentCar, collisionStateResults[1], trackProgress.getCarProgress(1), raceManager, innerBorder, outerBorder, centerline);
+        int selfRank = (raceManager.getLeaderIndex() == selfCarIndex) ? 1 : 2;
+        int oppRank  = (raceManager.getLeaderIndex() == oppCarIndex)  ? 1 : 2;
+
+        writeSelfCarState(data, *cars[selfCarIndex],
+            collisionStateResults[selfCarIndex],
+            trackProgress.getCarProgress(selfCarIndex),
+            selfRank, innerBorder, outerBorder, centerline);
+
+        writeOpponentCarState(data, *cars[oppCarIndex],
+            collisionStateResults[oppCarIndex],
+            trackProgress.getCarProgress(oppCarIndex),
+            oppRank);
 
         data->done_flag = static_cast<uint8_t>(raceManager.getState() == RaceState::FINISHED);
         data->state_ready = 1;

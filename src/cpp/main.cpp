@@ -128,12 +128,6 @@ void handleCollisions(const std::vector<std::unique_ptr<Car>> &cars,
 {
     size_t numCars = cars.size();
 
-    for(size_t i = 0; i < numCars; i++) {
-        collisionStateResults[i].collidedWithCar = -1;
-        collisionStateResults[i].collidedWithInnerBorder = false;
-        collisionStateResults[i].collidedWithOuterBorder = false;
-    }
-
     for (size_t i = 0; i < numCars; i++)
     {
         Car *car = cars[i].get();
@@ -188,26 +182,6 @@ void drawStartFinishLine(sf::RenderWindow &window,
     window.draw(line);
 }
 
-void handleWrongWayDetection(RaceManager& raceManager, TrackProgress& trackProgress, const std::vector<std::unique_ptr<Car>>& cars, std::vector<int>& wrongWayFrameCounts, int WRONG_WAY_RESPAWN_FRAMES) {
-    if (raceManager.shouldAcceptInput()) {
-        for (size_t i = 0; i < cars.size(); ++i) {
-            const CarProgress& cp = trackProgress.getCarProgress(static_cast<int>(i));
-
-            if (cp.goingWrongWay) {
-                wrongWayFrameCounts[i]++;
-                if (wrongWayFrameCounts[i] > WRONG_WAY_RESPAWN_FRAMES) {
-                    raceManager.respawnCar(static_cast<int>(i));
-                    wrongWayFrameCounts[i] = 0;
-                }
-            } else {
-                wrongWayFrameCounts[i] = 0;
-            }
-        }
-    } else {
-        std::fill(wrongWayFrameCounts.begin(), wrongWayFrameCounts.end(), 0);
-    }
-}
-
 void render(sf::RenderWindow &window,
             const std::vector<std::unique_ptr<Car>> &cars,
             std::vector<sf::RectangleShape> &carShapes,
@@ -249,8 +223,6 @@ int main()
 {
     constexpr unsigned int SCREEN_WIDTH = 1000;
     constexpr unsigned int SCREEN_HEIGHT = 600;
-    constexpr int WRONG_WAY_RESPAWN_FRAMES = 10;
-
     constexpr float INNER_RADIUS = 20.0f;
     constexpr float OUTER_RADIUS = 28.0f;
     constexpr float STRAIGHT_LENGTH = 40.0f;
@@ -285,14 +257,14 @@ int main()
     auto synchronizer = std::make_unique<CarSynchronizer>(externalInputMode, stepMode, shm);
 
     std::unique_ptr<CarInputHandler> inputHandler1;
-    if (externalInputMode && stepMode) {
+    if (synchronizer->isExternalInputMode() && synchronizer->isStepMode()) {
         inputHandler1 = std::make_unique<CenterlineCarInputHandler>(centerline.get());
     } else {
         inputHandler1 = std::make_unique<KeyboardCarInputHandler>();
     }
 
     std::unique_ptr<CarInputHandler> inputHandler2;
-    if(externalInputMode) {
+    if(synchronizer->isExternalInputMode()) {
         inputHandler2 = std::make_unique<SHMCarInputHandler>(shm);
     } else {
         CarKeyBindings keyBindings = {
@@ -325,11 +297,13 @@ int main()
     carShapes.push_back(createCarShape(*cars[0], coordTransform, sf::Color::Red));
     carShapes.push_back(createCarShape(*cars[1], coordTransform, sf::Color(80, 140, 255)));
 
-    std::vector<int> wrongWayFrameCounts(cars.size(), 0);
-
     std::vector<CollisionStateResult> collisionStateResults;
     collisionStateResults.resize(cars.size());
-    
+
+    if(synchronizer->isExternalInputMode() && raceManager.isIdleState()) {
+        raceManager.resetAndStartRace();
+    }
+
     while (window.isOpen())
     {
         while (const std::optional event = window.pollEvent())
@@ -340,22 +314,29 @@ int main()
             if (const auto* keyEvt = event->getIf<sf::Event::KeyPressed>()) {
                 if (keyEvt->code == sf::Keyboard::Key::Space)
                     raceManager.onSpacePressed();
-                if (keyEvt->code == sf::Keyboard::Key::R) {
-                    raceManager.respawnCar(0);
-                    wrongWayFrameCounts[0] = 0;
-                }
             }
         }
 
-        shmGameStateExporter->exportState(*cars[0], *cars[1], collisionStateResults, trackProgress, raceManager, innerBorder.get(), outerBorder.get(), centerline.get());
+        shmGameStateExporter->exportState(1, cars, collisionStateResults, trackProgress, raceManager, innerBorder.get(), outerBorder.get(), centerline.get());
+
+        for(size_t i = 0; i < cars.size(); i++) {
+            collisionStateResults[i].collidedWithCar = -1;
+            collisionStateResults[i].collidedWithInnerBorder = false;
+            collisionStateResults[i].collidedWithOuterBorder = false;
+        }
 
         if(synchronizer->isStepMode()) {
-            while(!synchronizer->isActionReady()){
+            while(!synchronizer->isActionReady() && !synchronizer->isResetFlagSet()) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
             }
         }
 
-        if (raceManager.shouldAcceptInput()) {
+        if(synchronizer->isExternalInputMode() && synchronizer->isResetFlagSet()) {
+            synchronizer->setActionReady(false);
+            synchronizer->setResetFlag(false);
+            raceManager.resetAndStartRace();
+        }
+        else if(raceManager.isRacing()) {
             inputHandler1->apply(*cars[0]);
 
             if(synchronizer->isExternalInputMode() && synchronizer->isActionReady()) {
@@ -365,24 +346,15 @@ int main()
             else if(!synchronizer->isExternalInputMode()) {
                 inputHandler2->apply(*cars[1]);
             }
-        }
-
-        if(synchronizer->isStepMode() && synchronizer->isResetFlagSet()){
-            raceManager.resetRace();
-            synchronizer->setResetFlag(false);
-        }
-
-        if (raceManager.shouldAcceptInput()) {
+            
             updateGame(*cars[0]);
             updateGame(*cars[1]);
 
             handleCollisions(cars, innerBorder.get(), outerBorder.get(), collisionStateResults);
+
+            raceManager.updateRace();
         }
-
-        raceManager.update();
-
-        handleWrongWayDetection(raceManager, trackProgress, cars, wrongWayFrameCounts, WRONG_WAY_RESPAWN_FRAMES);
-
+        
         render(window, cars, carShapes, coordTransform, innerBorder.get(), outerBorder.get());
         hud.draw(window, raceManager, trackProgress, 2);
         window.display();

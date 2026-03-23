@@ -59,16 +59,6 @@ void HUD::draw(sf::RenderWindow& window,
         }
     }
 
-    // --- Countdown ---
-    if (state == RaceState::COUNTDOWN) {
-        int num = raceManager.getCountdownNumber();
-        std::string countStr = (num > 0) ? std::to_string(num) : "GO!";
-        sf::Color countColor = (num > 0) ? sf::Color::White : sf::Color::Green;
-
-        drawText(window, countStr, 80, countColor,
-                 0, static_cast<float>(screenHeight) / 2.0f - 50.0f, true);
-    }
-
     // --- Waiting prompt ---
     if (state == RaceState::WAITING) {
         drawText(window, "Press SPACE to start", 32, sf::Color::White,

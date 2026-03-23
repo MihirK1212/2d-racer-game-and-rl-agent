@@ -12,6 +12,7 @@ from shm_state import (
     OFF_INPUT,
     OFF_ACTION_READY,
     OFF_STATE_READY,
+    OFF_RESET_FLAG,
     read_state,
     print_state,
 )
@@ -38,6 +39,14 @@ def main():
 
             if state_ready:
                 s = read_state(buf)
+
+                if s["done"]:
+                    struct.pack_into("4B", buf, OFF_INPUT, 0, 0, 0, 0)
+                    struct.pack_into("B", buf, OFF_ACTION_READY, 0)
+                    struct.pack_into("B", buf, OFF_RESET_FLAG, 1)
+                    struct.pack_into("B", buf, OFF_STATE_READY, 0)
+                    print("  Done flag detected — reset triggered.\n")
+                    continue
 
                 up = random.randint(0, 1)
                 down = random.randint(0, 1)
