@@ -42,7 +42,7 @@ class SHMGameStateExporter
             double denom = r.x * dir.y - r.y * dir.x;
             if (std::abs(denom) < 1e-9) continue;
             double t = (r.x * q.y - r.y * q.x) / denom;
-            double s = (dir.x * q.y - dir.y * q.x) / denom;
+            double s = (dir.y * q.x - dir.x * q.y) / denom;
             if (t >= 0.0 && s >= 0.0 && s <= 1.0 && t < best)
                 best = t;
         }

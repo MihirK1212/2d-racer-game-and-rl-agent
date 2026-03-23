@@ -1,8 +1,4 @@
 #include <cmath>
-
-#include "rounded_rectangle_curve.h"
-
-#include <cmath>
 #include "rounded_rectangle_curve.h"
 
 #ifndef M_PI
@@ -13,39 +9,45 @@ RoundedRectangleCurve::RoundedRectangleCurve(float radius, float lengthStraightS
     : radius(radius), lengthStraightSection(lengthStraightSection) {}
 
 Vector2D RoundedRectangleCurve::evaluate(double thetaDegrees) const {
-    // Normalize theta to [0, 360)
-    double theta = fmod(thetaDegrees, 360.0);
-    if (theta < 0) theta += 360.0;
-
-    double rad = theta * M_PI / 180.0;
-
-    double R = radius;
-    double L = lengthStraightSection;
-
-    double x, y;
-
-    // ---- Region 1: Right semicircle (0 → 90)
-    if (theta >= 0 && theta < 90) {
-        x = (L / 2.0) + R * cos(rad);
-        y = R * sin(rad);
-    }
-    // ---- Region 2: Top straight (90 → 180)
-    else if (theta >= 90 && theta < 180) {
-        double t = (theta - 90.0) / 90.0; // 0 → 1
-        x = (L / 2.0) - t * L;
-        y = R;
-    }
-    // ---- Region 3: Left semicircle (180 → 270)
-    else if (theta >= 180 && theta < 270) {
-        x = -(L / 2.0) + R * cos(rad);
-        y = R * sin(rad);
-    }
-    // ---- Region 4: Bottom straight (270 → 360)
-    else {
-        double t = (theta - 270.0) / 90.0; // 0 → 1
-        x = -(L / 2.0) + t * L;
-        y = -R;
+    // Normalize theta to [0, 360) and map it to distance along the stadium
+    // perimeter, starting at the rightmost point and moving counter-clockwise.
+    double theta = std::fmod(thetaDegrees, 360.0);
+    if (theta < 0.0) {
+        theta += 360.0;
     }
 
-    return {x, y};
+    const double R = radius;
+    const double L = lengthStraightSection;
+    const double quarterArc = M_PI * R * 0.5;
+    const double halfArc = M_PI * R;
+    const double perimeter = 2.0 * L + 2.0 * M_PI * R;
+    const double s = (theta / 360.0) * perimeter;
+
+    // 0 -> quarterArc: upper-right quarter arc
+    if (s < quarterArc) {
+        const double angle = s / R;
+        return {(L * 0.5) + R * std::cos(angle), R * std::sin(angle)};
+    }
+
+    // quarterArc -> quarterArc + L: top straight
+    if (s < quarterArc + L) {
+        const double t = (s - quarterArc) / L;
+        return {(L * 0.5) - t * L, R};
+    }
+
+    // quarterArc + L -> quarterArc + L + halfArc: left semicircle
+    if (s < quarterArc + L + halfArc) {
+        const double angle = (M_PI * 0.5) + (s - quarterArc - L) / R;
+        return {-(L * 0.5) + R * std::cos(angle), R * std::sin(angle)};
+    }
+
+    // quarterArc + L + halfArc -> quarterArc + 2L + halfArc: bottom straight
+    if (s < quarterArc + (2.0 * L) + halfArc) {
+        const double t = (s - quarterArc - L - halfArc) / L;
+        return {-(L * 0.5) + t * L, -R};
+    }
+
+    // Remaining distance: lower-right quarter arc back to the start point.
+    const double angle = -(M_PI * 0.5) + (s - quarterArc - (2.0 * L) - halfArc) / R;
+    return {(L * 0.5) + R * std::cos(angle), R * std::sin(angle)};
 }
