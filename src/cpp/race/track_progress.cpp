@@ -157,7 +157,9 @@ void TrackProgress::respawnCar(int carIndex) {
     cp.currentTheta = theta;
     cp.previousTheta = theta;
     cp.goingWrongWay = false;
-    cp.firstUpdateDone = false;
+    // A respawn happens mid-race, so the next start-line crossing should still
+    // count toward lap completion when checkpoint 0 is pending.
+    cp.firstUpdateDone = true;
     cp.totalProgress = computeValidatedProgress(cp);
 }
 

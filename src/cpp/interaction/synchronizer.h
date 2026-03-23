@@ -1,7 +1,7 @@
 #ifndef CAR_SYNCHRONIZER_H
 #define CAR_SYNCHRONIZER_H
 
-#include "../ipc/shared_memory.h"
+#include "./ipc/shared_memory.h"
 
 class CarSynchronizer {
     bool externalInputMode;
@@ -10,7 +10,11 @@ class CarSynchronizer {
 
     public:
 
-    CarSynchronizer(bool externalInputMode, bool stepMode, SharedGameMemory& sgm) : externalInputMode(externalInputMode), stepMode(stepMode), sgm(sgm) {}
+    CarSynchronizer(bool externalInputMode, bool stepMode, SharedGameMemory& sgm)
+        : externalInputMode(externalInputMode),
+          // Step-mode is valid only when actions come from external shared memory.
+          stepMode(externalInputMode && stepMode),
+          sgm(sgm) {}
 
     bool isStepMode() {
         return stepMode;

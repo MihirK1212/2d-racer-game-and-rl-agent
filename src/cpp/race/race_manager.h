@@ -3,7 +3,6 @@
 
 #include <vector>
 #include <memory>
-#include <SFML/System.hpp>
 
 #include "../entity/car/car.h"
 #include "../engine/vector.h"
@@ -11,7 +10,6 @@
 
 enum class RaceState {
     WAITING,
-    COUNTDOWN,
     RACING,
     FINISHED
 };
@@ -23,36 +21,39 @@ struct CarStartConfig {
 
 class RaceManager {
     static constexpr int TOTAL_LAPS = 3;
-    static constexpr float COUNTDOWN_STEP_SECONDS = 1.0f;
-    static constexpr int COUNTDOWN_STEPS = 4; // "3", "2", "1", "GO!"
+    static constexpr int WRONG_WAY_RESPAWN_FRAMES = 10;
 
     RaceState state = RaceState::WAITING;
-    sf::Clock countdownClock;
-    int countdownStep = 0;
     int winnerCarIndex = -1;
 
     TrackProgress& trackProgress;
     std::vector<Car*> cars;
     std::vector<CarStartConfig> startConfigs;
+    std::vector<int> wrongWayFrameCounts;
+
+    void updateRaceProgress();
+    void handleWrongWay();
+    void updateRaceOutcome();
 
 public:
     RaceManager(TrackProgress& trackProgress,
                 const std::vector<Car*>& cars,
                 const std::vector<CarStartConfig>& startConfigs);
 
+    void resetAndStartRace();
     void onSpacePressed();
-    void update();
+    void updateRace();
 
     void resetRace();
     void respawnCar(int carIndex);
 
     RaceState getState() const;
-    int getCountdownNumber() const;
     int getWinnerIndex() const;
     int getTotalLaps() const;
     int getLeaderIndex() const;
 
-    bool shouldAcceptInput() const;
+    bool isRacing() const;
+    bool isIdleState() const;
 };
 
 #endif
