@@ -57,8 +57,6 @@ def main():
                 struct.pack_into("B", buf, OFF_ACTION_READY, 1)
                 struct.pack_into("B", buf, OFF_STATE_READY, 0)
 
-                time.sleep(1 / 30)
-
                 keys = [k for k, v in zip("wsad", [up, down, left, right]) if v]
                 print_state(s)
                 print(f"  Action:           {keys or 'none'}\n")
