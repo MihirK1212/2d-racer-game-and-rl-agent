@@ -300,7 +300,7 @@ int main()
     std::vector<CollisionStateResult> collisionStateResults;
     collisionStateResults.resize(cars.size());
 
-    if(synchronizer->isExternalInputMode() && raceManager.isIdleState()) {
+    if(synchronizer->isExternalInputMode() && synchronizer->isStepMode() && raceManager.isIdleState()) {
         raceManager.resetAndStartRace();
     }
 
