@@ -12,6 +12,10 @@
 #include <unistd.h>
 
 #pragma pack(push, 1)
+
+constexpr int NUM_RAYCASTS = 7;
+constexpr double MAX_RAY_DISTANCE = 1000.0;
+
 struct SharedGameData {
     // Python -> C++ (input flags)
     uint8_t input_up;
@@ -47,6 +51,9 @@ struct SharedGameData {
     */
     double heading_vs_tangent; // angle between heading and tangent of the track
 
+    // 7 rays at -90, -60, -30, 0, +30, +60, +90 degrees relative to car heading
+    double ray_distances[NUM_RAYCASTS];
+
     uint8_t opponent_lap_count;
     uint8_t opponent_checkpoints_crossed;
     uint8_t opponent_rank_in_race;
@@ -62,7 +69,7 @@ struct SharedGameData {
 };
 #pragma pack(pop)
 
-static_assert(sizeof(SharedGameData) == 160, "SharedGameData must be exactly 160 bytes");
+static_assert(sizeof(SharedGameData) == 216, "SharedGameData must be exactly 216 bytes");
 
 constexpr const char* SHM_NAME = "/RacerGameSHM";
 constexpr size_t SHM_SIZE = sizeof(SharedGameData);

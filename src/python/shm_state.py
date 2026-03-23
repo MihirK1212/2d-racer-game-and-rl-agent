@@ -4,7 +4,8 @@ Shared memory layout and state helpers used by all runner scripts.
 import struct
 
 SHM_NAME = "RacerGameSHM"
-SHM_SIZE = 160
+SHM_SIZE = 216
+NUM_RAYCASTS = 7
 
 # ── Byte offsets (must match #pragma pack(push,1) SharedGameData) ──
 OFF_INPUT        = 0    # 4 × uint8: up, down, left, right
@@ -14,16 +15,16 @@ OFF_RESET_FLAG   = 6    # uint8
 OFF_DONE_FLAG    = 7    # uint8
 
 OFF_PLAYER_U8    = 8    # 4 × uint8: lap_count, checkpoints_crossed, rank, collided
-OFF_PLAYER_DBL   = 16   # 10 × double (after 4 bytes padding)
-OFF_OPP_U8       = 96   # 4 × uint8: same fields for opponent
-OFF_OPP_DBL      = 104  # 7 × double (after 4 bytes padding)
+OFF_PLAYER_DBL   = 16   # 17 × double (after 4 bytes padding): 10 original + 7 ray_distances
+OFF_OPP_U8       = 152  # 4 × uint8: same fields for opponent
+OFF_OPP_DBL      = 160  # 7 × double (after 4 bytes padding)
 
 
 def read_state(buf):
     lap, cp, rank, collided = struct.unpack_from("4B", buf, OFF_PLAYER_U8)
     (angle_on_track, total_progress, pos_x, pos_y, speed,
      dir_x, dir_y, dist_inner, dist_outer,
-     heading_vs_tangent) = struct.unpack_from("10d", buf, OFF_PLAYER_DBL)
+     heading_vs_tangent, *ray_distances) = struct.unpack_from("17d", buf, OFF_PLAYER_DBL)
 
     opp_lap, opp_cp, opp_rank, opp_collided = struct.unpack_from("4B", buf, OFF_OPP_U8)
     (opp_angle, opp_progress, opp_x, opp_y, opp_speed,
@@ -39,6 +40,7 @@ def read_state(buf):
         "dir_x": dir_x, "dir_y": dir_y,
         "dist_inner": dist_inner, "dist_outer": dist_outer,
         "heading_vs_tangent": heading_vs_tangent,
+        "ray_distances": list(ray_distances),
         "opp_lap": opp_lap, "opp_checkpoints": opp_cp,
         "opp_rank": opp_rank, "opp_collided": opp_collided,
         "opp_angle": opp_angle, "opp_progress": opp_progress,
@@ -60,6 +62,10 @@ def print_state(s):
     print(f"  Dist inner wall:  {s['dist_inner']:.3f}")
     print(f"  Dist outer wall:  {s['dist_outer']:.3f}")
     print(f"  Heading vs tang:  {s['heading_vs_tangent']:.3f}")
+    ray_labels = ["-90°", "-60°", "-30°", "0°", "+30°", "+60°", "+90°"]
+    rays = s['ray_distances']
+    ray_str = "  ".join(f"{ray_labels[i]}:{rays[i]:.1f}" for i in range(len(rays)))
+    print(f"  Raycasts:         {ray_str}")
     print("─── Opponent ───")
     print(f"  Lap: {s['opp_lap']}   Checkpoints: {s['opp_checkpoints']}   Rank: {s['opp_rank']}   Collided: {s['opp_collided']}")
     print(f"  Position:        ({s['opp_x']:.3f}, {s['opp_y']:.3f})")

@@ -3,6 +3,8 @@
 
 #include <memory>
 #include <vector>
+#include <algorithm>
+#include <cmath>
 
 #include "../../entity/car/car.h"
 #include "../ipc/shared_memory.h"
@@ -19,6 +21,33 @@ struct CollisionStateResult
 class SHMGameStateExporter
 {
     SharedGameMemory &sgm;
+
+    static constexpr double PI = 3.14159265358979323846;
+
+    static constexpr double RAY_ANGLES_DEG[NUM_RAYCASTS] = {
+        -90.0, -60.0, -30.0, 0.0, 30.0, 60.0, 90.0
+    };
+
+    static double castRayAgainstPolyline(
+        const Vector2D &origin,
+        const Vector2D &dir,
+        const std::vector<Curve2DPoint> &pts
+    ) {
+        double best = MAX_RAY_DISTANCE;
+        for (size_t i = 0; i + 1 < pts.size(); ++i) {
+            const Vector2D &a = pts[i].position;
+            const Vector2D &b = pts[i + 1].position;
+            Vector2D r = b - a;
+            Vector2D q = origin - a;
+            double denom = r.x * dir.y - r.y * dir.x;
+            if (std::abs(denom) < 1e-9) continue;
+            double t = (r.x * q.y - r.y * q.x) / denom;
+            double s = (dir.x * q.y - dir.y * q.x) / denom;
+            if (t >= 0.0 && s >= 0.0 && s <= 1.0 && t < best)
+                best = t;
+        }
+        return best;
+    }
 
     void writeSelfCarState(
         SharedGameData *data,
@@ -60,6 +89,16 @@ class SHMGameStateExporter
         double dot = Vector2D::dot(dir, tangent);
         double cross = Vector2D::cross(dir, tangent);
         data->heading_vs_tangent = std::atan2(cross, dot);
+
+        const auto &innerPts = innerBorder->getCachedPoints();
+        const auto &outerPts = outerBorder->getCachedPoints();
+        for (int i = 0; i < NUM_RAYCASTS; ++i) {
+            double angleRad = RAY_ANGLES_DEG[i] * (PI / 180.0);
+            Vector2D rayDir = dir.rotate(angleRad);
+            double dInner = castRayAgainstPolyline(pos, rayDir, innerPts);
+            double dOuter = castRayAgainstPolyline(pos, rayDir, outerPts);
+            data->ray_distances[i] = std::min(dInner, dOuter);
+        }
     }
 
     void writeOpponentCarState(
