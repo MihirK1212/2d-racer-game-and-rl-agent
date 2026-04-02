@@ -1,15 +1,8 @@
-import struct
 import time
+
 from pynput import keyboard
-from multiprocessing import shared_memory, resource_tracker
-from shm_state import (
-    SHM_NAME,
-    OFF_INPUT,
-    OFF_ACTION_READY,
-    OFF_STATE_READY,
-    read_state,
-    print_state,
-)
+
+from shm import ShmAccessor, print_state
 
 keys_pressed = {"w": False, "s": False, "a": False, "d": False, "esc": False}
 
@@ -38,14 +31,10 @@ listener.start()
 
 def main():
     try:
-        shm = shared_memory.SharedMemory(name=SHM_NAME)
+        shm = ShmAccessor()
     except FileNotFoundError:
-        print(f"Shared memory '{SHM_NAME}' not found.")
-        print("Make sure the game is running first.")
+        print("Shared memory not found. Make sure the game is running first.")
         return
-
-    resource_tracker.unregister(f"/{SHM_NAME}", "shared_memory")
-    buf = shm.buf
 
     print("Connected to shared memory.")
     print("Use WASD to drive, ESC to quit.\n")
@@ -57,14 +46,13 @@ def main():
             left = int(keys_pressed["a"])
             right = int(keys_pressed["d"])
 
-            struct.pack_into("4B", buf, OFF_INPUT, up, down, left, right)
-            struct.pack_into("B", buf, OFF_ACTION_READY, 1)
+            shm.set_input(up, down, left, right)
+            shm.set_action_ready(True)
 
-            state_ready = struct.unpack_from("B", buf, OFF_STATE_READY)[0]
-            if state_ready:
-                s = read_state(buf)
-                print_state(s)
-                struct.pack_into("B", buf, OFF_STATE_READY, 0)
+            if shm.is_state_ready():
+                state = shm.read_state()
+                print_state(state)
+                shm.set_state_ready(False)
 
             time.sleep(1 / 60)
 
