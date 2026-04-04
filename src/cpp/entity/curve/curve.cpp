@@ -83,6 +83,7 @@ Vector2D ParametricCurve2D::outwardNormalAt(double thetaDegrees) const {
 }
 
 ClosestPointResult ParametricCurve2D::closestPointTo(const Vector2D& point) const {
+    // Polyline approximation: find the closest point on any segment [a,b] and keep the best.
     ClosestPointResult best;
     best.distance = 1e18;
     best.theta = 0;
@@ -96,9 +97,12 @@ ClosestPointResult ParametricCurve2D::closestPointTo(const Vector2D& point) cons
         Vector2D ab = b - a;
         double lenSq = Vector2D::dot(ab, ab);
 
+        // Project `point` onto the line through a→b; t ∈ [0,1] is the fraction along the segment.
+        // Degenerate segment (lenSq ≈ 0): keep t = 0 so closest is endpoint a.
         double t = 0;
         if (lenSq > epsilon * epsilon) {
             t = Vector2D::dot(point - a, ab) / lenSq;
+            // Clamp to [0,1] so the closest point stays on the segment, not the infinite line.
             t = std::clamp(t, 0.0, 1.0);
         }
 
@@ -108,6 +112,7 @@ ClosestPointResult ParametricCurve2D::closestPointTo(const Vector2D& point) cons
         if (dist < best.distance) {
             best.distance = dist;
             best.position = closest;
+            // Match the curve parameter theta linearly along this segment (same t as position).
             best.theta = points[i].theta + t * (points[i + 1].theta - points[i].theta);
         }
     }
