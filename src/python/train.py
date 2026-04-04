@@ -1,6 +1,4 @@
 """
-Train a PPO agent to drive in the 2D racer game.
-
 Usage:
     1. Start the C++ game with externalInputMode=true, stepMode=true
     2. python train.py
@@ -13,30 +11,8 @@ import os
 import argparse
 
 from stable_baselines3 import PPO
-from stable_baselines3.common.callbacks import CheckpointCallback, BaseCallback
+from stable_baselines3.common.callbacks import CheckpointCallback
 from env import RacerEnv
-
-
-class EpisodeLogCallback(BaseCallback):
-    """Prints a one-liner per episode so you can watch training progress."""
-
-    def __init__(self, verbose=0):
-        super().__init__(verbose)
-        self._ep_count = 0
-
-    def _on_step(self) -> bool:
-        for info in self.locals.get("infos", []):
-            if "episode" in info:
-                self._ep_count += 1
-                ep = info["episode"]
-                extra = f"  progress={info.get('total_progress', 0):.0f}deg" if "total_progress" in info else ""
-                print(
-                    f"  ep {self._ep_count:>5}  "
-                    f"reward={ep['r']:>8.1f}  "
-                    f"len={ep['l']:>5}{extra}"
-                )
-        return True
-
 
 def main():
     parser = argparse.ArgumentParser(description="Train PPO on the 2D Racer")
@@ -79,8 +55,7 @@ def main():
             save_freq=args.checkpoint_freq,
             save_path=checkpoint_dir,
             name_prefix="racer_ppo",
-        ),
-        EpisodeLogCallback(),
+        )
     ]
 
     print(f"Training for {args.timesteps:,} timesteps ...")

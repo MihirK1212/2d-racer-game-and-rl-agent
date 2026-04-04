@@ -1,6 +1,4 @@
 """
-Run a trained PPO model in the 2D racer game.
-
 Usage:
     1. Start the C++ game (externalInputMode=true; stepMode=true for
        deterministic replay, or stepMode=false for real-time at 60fps)
@@ -12,7 +10,6 @@ import argparse
 
 from stable_baselines3 import PPO
 from env import RacerEnv
-
 
 def main():
     parser = argparse.ArgumentParser(description="Play with a trained model")
