@@ -34,17 +34,17 @@ For each sample point **p**:
 
 1. **Position correction** — push the car out along the collision normal:
 
-   \[
-   \mathbf{x'} = \mathbf{x} + \mathbf{n} \cdot (penetration + \varepsilon)
-   \]
+   ```
+   x' = x + n · (penetration + ε)
+   ```
 
    where ε is a small skin width to prevent surface oscillation.
 
 2. **Speed correction** — if the car is moving into the wall, reduce its speed along its forward axis:
 
-   \[
-   s' = s \cdot \bigl(1 - (1 + e)\cos^2\alpha\bigr)
-   \]
+   ```
+   s' = s · (1 − (1 + e) · cos²α)
+   ```
 
    where *e* = wall restitution (0.3), *α* = angle between the car's forward direction and the wall normal, and *s* is the car's scalar speed. A head-on hit (cos α ≈ 1) kills most speed; a glancing hit (cos α ≈ 0) barely slows the car.
 
@@ -69,19 +69,17 @@ The axis with the **smallest positive overlap** gives the collision normal and p
 
 1. **Position correction** — push both cars apart equally:
 
-   \[
-   \mathbf{x_1'} = \mathbf{x_1} - \tfrac{1}{2}\mathbf{n}(penetration + \varepsilon), \quad
-   \mathbf{x_2'} = \mathbf{x_2} + \tfrac{1}{2}\mathbf{n}(penetration + \varepsilon)
-   \]
+   ```
+   x₁' = x₁ − ½ · n · (penetration + ε)
+   x₂' = x₂ + ½ · n · (penetration + ε)
+   ```
 
 2. **Impulse** — compute the relative velocity along the normal, then apply a 1-D impulse assuming equal unit masses:
 
-   \[
-   v_{rel} = (\mathbf{v_1} - \mathbf{v_2}) \cdot \mathbf{n}
-   \]
-   \[
-   j = -\frac{(1 + e)\, v_{rel}}{2}
-   \]
+   ```
+   v_rel = (v₁ − v₂) · n
+   j     = −(1 + e) · v_rel / 2
+   ```
 
    where *e* = car restitution (0.7). Each car's velocity is adjusted by ±**n**·*j*, then projected back onto its own forward axis to get the new scalar speed.
 
