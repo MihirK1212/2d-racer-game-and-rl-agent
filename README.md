@@ -76,6 +76,11 @@ source venv/bin/activate
 python train.py --timesteps 500000
 ```
 
+> **Note:** If `python train.py` fails (e.g. permission issues with shared memory), try:
+> ```bash
+> sudo $(which python3) train.py --timesteps 500000
+> ```
+
 Monitor training with TensorBoard:
 
 ```bash
