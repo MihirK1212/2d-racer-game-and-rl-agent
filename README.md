@@ -10,7 +10,12 @@ General architecture:
 
 A top-down 2D racer rendered with SFML at 60 FPS. Two cars race around a rounded-rectangle (stadium) track for 3 laps. Car 1 (red) is keyboard-controlled with arrow keys (or follows the centerline automatically during training). Car 2 (blue) is either WASD-controlled or driven by the RL agent over shared memory. The track has inner and outer walls, a start/finish line, 8 directional checkpoints, and wrong-way detection that respawns you at the last checkpoint.
 
+![Training](documentation/screenshot_1_training.png)
+![Game In Progress](documentation/screenshot_2_game_in_progress.png)
+
 ## RL Concepts
+
+![State → Agent → Action → Reward](documentation/reward_and_state.jpeg)
 
 ### Markov Decision Process
 
