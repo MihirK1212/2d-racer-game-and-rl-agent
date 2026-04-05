@@ -18,7 +18,7 @@ An MDP frames the problem as an agent interacting with an environment in discret
 
 ### Policy-Based vs Value-Based Methods
 
-Value-based methods learn a value function (\(V(s)\) or \(Q(s,a)\)) and derive a policy from it (e.g. epsilon-greedy). Policy-based methods learn the policy directly as a probability distribution \(\pi_\theta(s)\), typically using Monte Carlo sampling.
+Value-based methods learn a value function and derive a policy from it (e.g. epsilon-greedy). Policy-based methods learn the policy directly as a probability distribution, typically using Monte Carlo sampling.
 
 ![Policy vs Value](documentation/policy_vs_value.jpeg)
 
