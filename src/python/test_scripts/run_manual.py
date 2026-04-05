@@ -2,7 +2,7 @@ import time
 
 from pynput import keyboard
 
-from shm import ShmAccessor, print_state
+from ..shm import ShmAccessor, print_state
 
 keys_pressed = {"w": False, "s": False, "a": False, "d": False, "esc": False}
 
