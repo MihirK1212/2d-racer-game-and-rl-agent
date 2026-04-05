@@ -4,6 +4,10 @@ Reads state from shared memory, picks random WASD actions, writes them
 and sets action_ready.
 """
 
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
 import time
 import random
 
