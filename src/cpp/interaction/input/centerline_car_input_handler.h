@@ -8,6 +8,7 @@
 class CenterlineCarInputHandler : public CarInputHandler {
     ParametricCurve2D* centerline;
     static constexpr double STEER_ANGLE = 3.0;
+    static constexpr double SPEED_CAP = 14.0;
 
 public:
     explicit CenterlineCarInputHandler(ParametricCurve2D* centerline)
@@ -26,7 +27,8 @@ public:
             car.rotateClockwise(STEER_ANGLE);
 
         car.setNoInputAcceleration();
-        car.accelerateForward();
+        if (car.getSpeed() < SPEED_CAP)
+            car.accelerateForward();
     }
 };
 

@@ -1,10 +1,4 @@
 """
-Gymnasium environment for the 2D Racer game.
-
-Communicates with the C++ engine via POSIX shared memory in lock-step mode.
-Start the C++ game with externalInputMode=true, stepMode=true BEFORE
-instantiating this environment.
-
 Observation (12 floats):
     speed, heading_vs_tangent, dist_inner, dist_outer, 7x raycasts, collided
 
@@ -17,6 +11,8 @@ Reward:
     -5.0  per collision frame
     -0.01 per step (time penalty)
     +100  per lap completed
+    -0.5 * opponent_progress_delta (penalise opponent gaining ground)
+    +20  per rank gained (overtake), -20 per rank lost (overtaken)
 """
 
 import gymnasium as gym
@@ -41,14 +37,14 @@ _MAX_SPEED = 20.0
 _WALL_CLIP = 20.0
 _RAY_CLIP = 50.0
 
-_COLLISION_PENALTY = 5.0
-_TIME_PENALTY = 0.01
-_LAP_BONUS = 100.0
+_COLLISION_PENALTY = 5.0 # subtract COLLISION_PENALTY points from the reward on collision
+_TIME_PENALTY = 0.01 # subtract TIME_PENALTY points from the reward per step
+_LAP_BONUS = 100.0 # add LAP_BONUS points to the reward per lap completed
+_OVERTAKE_BONUS = 20.0 # add OVERTAKE_BONUS points to the reward per rank gained (overtake)
+_OPP_PROGRESS_WEIGHT = 0.1 # subtract OPP_PROGRESS_WEIGHT points from the reward per unit of opponent progress gained
 
 
 class RacerEnv(gym.Env):
-    """Lock-step Gymnasium wrapper over the C++ 2D racer engine."""
-
     metadata = {"render_modes": ["human"]}
 
     def __init__(self, max_episode_steps=5000, render_mode=None):
@@ -65,6 +61,8 @@ class RacerEnv(gym.Env):
 
         self._prev_progress = 0.0
         self._prev_laps = 0
+        self._prev_rank = 0
+        self._prev_opp_progress = 0.0
         self._steps = 0
 
     @staticmethod
@@ -96,8 +94,17 @@ class RacerEnv(gym.Env):
         if laps_gained > 0:
             reward += _LAP_BONUS * laps_gained
 
+        opp_progress_delta = s.opponent.total_progress - self._prev_opp_progress
+        reward -= _OPP_PROGRESS_WEIGHT * opp_progress_delta
+
+        rank_change = self._prev_rank - p.rank
+        if rank_change != 0:
+            reward += _OVERTAKE_BONUS * rank_change
+
         self._prev_progress = p.total_progress
         self._prev_laps = p.lap
+        self._prev_rank = p.rank
+        self._prev_opp_progress = s.opponent.total_progress
         return reward
 
     def reset(self, *, seed=None, options=None):
@@ -114,6 +121,8 @@ class RacerEnv(gym.Env):
 
         self._prev_progress = s.player.total_progress
         self._prev_laps = s.player.lap
+        self._prev_rank = s.player.rank
+        self._prev_opp_progress = s.opponent.total_progress
         self._steps = 0
 
         return self._obs_from_state(s), {}

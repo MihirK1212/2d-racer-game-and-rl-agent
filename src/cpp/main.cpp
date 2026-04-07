@@ -229,7 +229,7 @@ int main()
     constexpr float CENTERLINE_RADIUS = (INNER_RADIUS + OUTER_RADIUS) / 2.0f;
 
     bool externalInputMode = true; // whether the input for the second car is coming from the shared memory or from the keyboard
-    bool stepMode = false; // whether the game is running in step mode or not
+    bool stepMode = true; // whether the game is running in step mode or not
 
     sf::RenderWindow window = createWindow();
 
